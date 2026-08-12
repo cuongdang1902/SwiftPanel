@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SwiftPanel.Models;
+using SwiftPanel.Services;
 using SwiftPanel.Views;
 using System;
 using System.Collections.Generic;
@@ -17,11 +18,57 @@ namespace SwiftPanel.ViewModels
         [ObservableProperty] private bool _isLeftActive = true;
         [ObservableProperty] private bool _isRightActive = false;
 
-        public FilePanelViewModel LeftPanel { get; } = new FilePanelViewModel("C:\\");
-        public FilePanelViewModel RightPanel { get; } = new FilePanelViewModel("C:\\");
+        public FilePanelViewModel LeftPanel  { get; }
+        public FilePanelViewModel RightPanel { get; }
 
-        public FilePanelViewModel ActivePanel => IsLeftActive ? LeftPanel : RightPanel;
+        public FilePanelViewModel ActivePanel   => IsLeftActive ? LeftPanel : RightPanel;
         public FilePanelViewModel InactivePanel => IsLeftActive ? RightPanel : LeftPanel;
+
+        public MainViewModel(AppSettings? settings = null)
+        {
+            var s = settings ?? new AppSettings();
+            LeftPanel  = new FilePanelViewModel(s.LeftPath);
+            RightPanel = new FilePanelViewModel(s.RightPath);
+            ApplySettings(s);
+        }
+
+        /// <summary>Apply persisted settings to both panels.</summary>
+        public void ApplySettings(AppSettings s)
+        {
+            LeftPanel.ViewMode      = s.LeftViewMode;
+            LeftPanel.CurrentSort   = s.LeftSort;
+            LeftPanel.SortAscending = s.LeftSortAscending;
+            LeftPanel.ShowHidden    = s.LeftShowHidden;
+
+            RightPanel.ViewMode      = s.RightViewMode;
+            RightPanel.CurrentSort   = s.RightSort;
+            RightPanel.SortAscending = s.RightSortAscending;
+            RightPanel.ShowHidden    = s.RightShowHidden;
+
+            BookmarkService.Instance.Load(s.Bookmarks);
+        }
+
+        /// <summary>Capture current state into an AppSettings snapshot for persistence.</summary>
+        public AppSettings CaptureSettings(double winW, double winH, double winL, double winT, bool maximized)
+            => new AppSettings
+            {
+                LeftPath           = LeftPanel.CurrentPath,
+                RightPath          = RightPanel.CurrentPath,
+                LeftViewMode       = LeftPanel.ViewMode,
+                RightViewMode      = RightPanel.ViewMode,
+                LeftSort           = LeftPanel.CurrentSort,
+                LeftSortAscending  = LeftPanel.SortAscending,
+                RightSort          = RightPanel.CurrentSort,
+                RightSortAscending = RightPanel.SortAscending,
+                LeftShowHidden     = LeftPanel.ShowHidden,
+                RightShowHidden    = RightPanel.ShowHidden,
+                WindowWidth        = winW,
+                WindowHeight       = winH,
+                WindowLeft         = winL,
+                WindowTop          = winT,
+                Maximized          = maximized,
+                Bookmarks          = BookmarkService.Instance.Export()
+            };
 
         // ─────────────────────────────────────────────────────────────────
         // Panel focus switching (Tab key)
@@ -297,6 +344,43 @@ namespace SwiftPanel.ViewModels
 
         [RelayCommand]
         private void InvertMarks() => ActivePanel.InvertMarks();
+
+        // ─────────────────────────────────────────────────────────────────
+        // Bookmarks (Ctrl+D = add, shown in FilePanel popup)
+        // ─────────────────────────────────────────────────────────────────
+        [RelayCommand]
+        public void AddBookmark()
+            => BookmarkService.Instance.Add(ActivePanel.CurrentPath);
+
+        [RelayCommand]
+        public void RemoveBookmark(BookmarkEntry entry)
+            => BookmarkService.Instance.Bookmarks.Remove(entry);
+
+        // ─────────────────────────────────────────────────────────────────
+        // Multi-Rename (Ctrl+M)
+        // ─────────────────────────────────────────────────────────────────
+        [RelayCommand]
+        public void MultiRename()
+        {
+            var panel = ActivePanel;
+            var items = panel.GetActionItems()
+                .Where(i => i.Name != "..")
+                .ToList();
+
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Select or mark files to rename.",
+                    "Multi-Rename", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var dlg = new MultiRenameDialog(items, panel.CurrentPath)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            dlg.ShowDialog();
+            // FileSystemWatcher will auto-refresh the panel
+        }
 
         // ─────────────────────────────────────────────────────────────────
         // Properties (Alt+Enter)

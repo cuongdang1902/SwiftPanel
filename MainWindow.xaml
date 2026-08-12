@@ -46,6 +46,8 @@
                             Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Delete (F8)"/>
                     <Button Content="✏️ Rename" Command="{Binding RenameCommand}"
                             Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Rename (F2)"/>
+                    <Button Content="🔤 Multi-Rename" Command="{Binding MultiRenameCommand}"
+                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Multi-Rename (Ctrl+M)"/>
                     <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
                     <Button Content="🔍 Find" Command="{Binding FindCommand}"
                             Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Find (Ctrl+F)"/>
@@ -56,6 +58,22 @@
                             Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Unmark All (Num-)"/>
                     <Button Content="⇄ Invert" Command="{Binding InvertMarksCommand}"
                             Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Invert Marks (Num*)"/>
+                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
+                    <!-- Bookmarks button + popup -->
+                    <Button x:Name="BookmarksBtn" Content="★ Bookmarks"
+                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Bookmarks (Ctrl+D to add)"
+                            Click="OnBookmarksBtnClick">
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="BookmarksMenu" StaysOpen="False">
+                                <MenuItem Header="★ Add current folder  Ctrl+D"
+                                          Command="{Binding AddBookmarkCommand}"
+                                          FontWeight="Bold"/>
+                                <Separator/>
+                                <MenuItem Header="(no bookmarks yet)" IsEnabled="False"
+                                          x:Name="NoBookmarksItem"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                     <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
                     <Button Content="⬛ Terminal" Command="{Binding OpenTerminalCommand}"
                             Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Open Terminal (Ctrl+T)"/>
