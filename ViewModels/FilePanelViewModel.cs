@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -54,6 +55,21 @@ namespace SwiftPanel.ViewModels
         // Raw (unfiltered) list – filtering works on top of this
         private List<FileItem> _allItems = new();
 
+        // ── Navigation history ────────────────────────────────────────────
+        private readonly List<string> _navHistory = new();
+        private int _navIndex = -1;
+        public bool CanNavigateBack    => _navIndex > 0;
+        public bool CanNavigateForward => _navIndex < _navHistory.Count - 1;
+
+        // ── ZIP state ─────────────────────────────────────────────────────
+        [ObservableProperty] private bool   _isInZip          = false;
+        [ObservableProperty] private string _zipFilePath      = string.Empty;
+        [ObservableProperty] private string _zipInternalPath  = string.Empty;
+
+        // ── Disk usage (updated on NavigateTo) ────────────────────────────
+        [ObservableProperty] private double _driveUsedPercent = 0;
+        [ObservableProperty] private string _driveSpaceText   = string.Empty;
+
         // Arrow indicator strings
         public string NameSortArrow       => SortArrow(SortColumn.Name);
         public string ExtSortArrow        => SortArrow(SortColumn.Extension);
@@ -91,17 +107,40 @@ namespace SwiftPanel.ViewModels
         }
 
         // ─────────────────────────────────────────────────────────────────
-        // Navigation
+        // Navigation  (history + ZIP awareness + disk info)
         // ─────────────────────────────────────────────────────────────────
-        [RelayCommand]
-        public void NavigateTo(string path)
+        // NavigateTo is NOT a RelayCommand because it has an optional bool parameter.
+        // Call it directly from code-behind; breadcrumb buttons call it via Click handlers.
+        public void NavigateTo(string path, bool pushHistory = true)
         {
+            // ZIP virtual path?
+            if (IsZipPath(path))
+            {
+                var (zf, ip) = SplitZipPath(path);
+                NavigateToZip(zf, ip, pushHistory);
+                return;
+            }
+
             if (!Directory.Exists(path)) return;
+
+            // Push to history
+            if (pushHistory && !string.IsNullOrEmpty(CurrentPath) && CurrentPath != path)
+            {
+                if (_navIndex < _navHistory.Count - 1)
+                    _navHistory.RemoveRange(_navIndex + 1, _navHistory.Count - _navIndex - 1);
+                _navHistory.Add(CurrentPath);
+                _navIndex = _navHistory.Count - 1;
+                OnPropertyChanged(nameof(CanNavigateBack));
+                OnPropertyChanged(nameof(CanNavigateForward));
+            }
+
+            IsInZip    = false;
             CurrentPath = path;
-            FilterText = string.Empty;   // clear filter on navigate
+            FilterText  = string.Empty;
             IsFilterVisible = false;
             LoadDirectory(path);
             SetupWatcher(path);
+            UpdateDriveInfo(path);
 
             if (ActiveTabIndex >= 0 && ActiveTabIndex < Tabs.Count)
                 Tabs[ActiveTabIndex].Header = Path.GetFileName(path).IfEmpty(path);
@@ -110,27 +149,103 @@ namespace SwiftPanel.ViewModels
         [RelayCommand]
         public void NavigateUp()
         {
-            var parent = Directory.GetParent(CurrentPath);
-            if (parent != null)
-                NavigateTo(parent.FullName);
+            if (IsInZip)
+            {
+                var trimmed = ZipInternalPath.TrimEnd('/');
+                int slash   = trimmed.LastIndexOf('/');
+                if (slash < 0)
+                    NavigateTo(Path.GetDirectoryName(ZipFilePath)!);  // exit ZIP
+                else
+                    NavigateToZip(ZipFilePath, trimmed.Substring(0, slash + 1));
+            }
+            else
+            {
+                var parent = Directory.GetParent(CurrentPath);
+                if (parent != null) NavigateTo(parent.FullName);
+            }
+        }
+
+        [RelayCommand]
+        public void NavigateBack()
+        {
+            if (!CanNavigateBack) return;
+            _navIndex--;
+            OnPropertyChanged(nameof(CanNavigateBack));
+            OnPropertyChanged(nameof(CanNavigateForward));
+            NavigateTo(_navHistory[_navIndex], pushHistory: false);
+        }
+
+        [RelayCommand]
+        public void NavigateForward()
+        {
+            if (!CanNavigateForward) return;
+            _navIndex++;
+            OnPropertyChanged(nameof(CanNavigateBack));
+            OnPropertyChanged(nameof(CanNavigateForward));
+            NavigateTo(_navHistory[_navIndex], pushHistory: false);
         }
 
         [RelayCommand]
         public void OpenItem(FileItem? item)
         {
             if (item == null) return;
-            if (item.IsDirectory)
-                NavigateTo(item.FullPath);
-            else
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = item.FullPath,
-                    UseShellExecute = true
-                });
+
+            if (item.Name == "..")      { NavigateUp();          return; }
+            if (item.IsDirectory)       { NavigateTo(item.FullPath); return; }
+
+            // ZIP on real FS → navigate inside
+            var ext = Path.GetExtension(item.FullPath ?? "").ToLowerInvariant();
+            if (ext == ".zip" && item.FullPath != null && File.Exists(item.FullPath))
+            {
+                NavigateToZip(item.FullPath, "");
+                return;
+            }
+
+            // Item inside ZIP → extract to temp
+            if (IsInZip)
+            {
+                var tmp = ExtractZipEntryToTemp(ZipFilePath, ZipInternalPath + item.Name);
+                if (tmp != null)
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        { FileName = tmp, UseShellExecute = true });
+                return;
+            }
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                { FileName = item.FullPath, UseShellExecute = true });
         }
 
         // ─────────────────────────────────────────────────────────────────
-        // View Mode
+        // F4 – Open in text editor
+        // ─────────────────────────────────────────────────────────────────
+        [RelayCommand]
+        public void OpenInEditor()
+        {
+            var item = SelectedItem;
+            if (item == null || item.IsDirectory || item.Name == "..") return;
+
+            var filePath = item.FullPath;
+            if (IsInZip)
+                filePath = ExtractZipEntryToTemp(ZipFilePath, ZipInternalPath + item.Name) ?? filePath;
+
+            string[] editors =
+            [
+                @"C:\Program Files\Notepad++\notepad++.exe",
+                @"C:\Program Files (x86)\Notepad++\notepad++.exe",
+                "notepad.exe"
+            ];
+            foreach (var editor in editors)
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        { FileName = editor, Arguments = $"\"{filePath}\"", UseShellExecute = true });
+                    return;
+                }
+                catch { }
+            }
+        }
+
         // ─────────────────────────────────────────────────────────────────
         [RelayCommand]
         public void SetViewMode(string modeName)
@@ -165,6 +280,45 @@ namespace SwiftPanel.ViewModels
         // ─────────────────────────────────────────────────────────────────
         [RelayCommand]
         public void ToggleHidden() => ShowHidden = !ShowHidden;
+
+        // ─────────────────────────────────────────────────────────────────
+        // Folder Size Calculator  (Ctrl+L)
+        // ─────────────────────────────────────────────────────────────────
+        [RelayCommand]
+        public async Task CalculateFolderSizes()
+        {
+            var folders = _allItems
+                .Where(i => i.IsDirectory && i.Name != "..")
+                .ToList();
+
+            if (folders.Count == 0) return;
+
+            // Calculate all folder sizes in parallel
+            var tasks = folders.Select(folder => Task.Run(() =>
+            {
+                long size = GetDirectorySize(folder.FullPath);
+                Application.Current.Dispatcher.BeginInvoke(() =>
+                {
+                    folder.SizeBytes   = size;
+                    folder.DisplaySize = FileItem.FormatSizePublic(size);
+                });
+            }));
+
+            await Task.WhenAll(tasks);
+
+            // Re-sort to reflect new sizes if sorting by size
+            Application.Current.Dispatcher.Invoke(ApplySort);
+        }
+
+        private static long GetDirectorySize(string path)
+        {
+            try
+            {
+                return Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)
+                    .Sum(f => { try { return new FileInfo(f).Length; } catch { return 0L; } });
+            }
+            catch { return 0; }
+        }
 
         // ─────────────────────────────────────────────────────────────────
         // Quick Filter  (Ctrl+F or just start typing)
@@ -489,6 +643,7 @@ namespace SwiftPanel.ViewModels
         private void SetupWatcher(string path)
         {
             _watcher?.Dispose();
+            if (IsInZip) { _watcher = null; return; } // no watcher inside ZIP
             try
             {
                 _watcher = new FileSystemWatcher(path)
@@ -502,6 +657,172 @@ namespace SwiftPanel.ViewModels
                 _watcher.Renamed += (_, _) => Application.Current.Dispatcher.Invoke(() => LoadDirectory(CurrentPath));
             }
             catch { }
+        }
+
+        // ── Disk usage ────────────────────────────────────────────────────
+        private void UpdateDriveInfo(string path)
+        {
+            try
+            {
+                var root = Path.GetPathRoot(path);
+                if (string.IsNullOrEmpty(root)) return;
+                var di    = new DriveInfo(root);
+                if (!di.IsReady) return;
+                long free  = di.AvailableFreeSpace;
+                long total = di.TotalSize;
+                long used  = total - free;
+                DriveUsedPercent = total > 0 ? (double)used / total * 100 : 0;
+                DriveSpaceText   = $"{FormatSize(free)} free / {FormatSize(total)}";
+            }
+            catch
+            {
+                DriveUsedPercent = 0;
+                DriveSpaceText   = string.Empty;
+            }
+        }
+
+        // ── ZIP navigation ────────────────────────────────────────────────
+
+        /// <summary>Navigate into a ZIP file at a given internal path (e.g., "subfolder/").</summary>
+        public void NavigateToZip(string zipFilePath, string internalPath, bool pushHistory = true)
+        {
+            if (!File.Exists(zipFilePath)) return;
+
+            if (pushHistory && !string.IsNullOrEmpty(CurrentPath))
+            {
+                if (_navIndex < _navHistory.Count - 1)
+                    _navHistory.RemoveRange(_navIndex + 1, _navHistory.Count - _navIndex - 1);
+                _navHistory.Add(CurrentPath);
+                _navIndex = _navHistory.Count - 1;
+                OnPropertyChanged(nameof(CanNavigateBack));
+                OnPropertyChanged(nameof(CanNavigateForward));
+            }
+
+            ZipFilePath     = zipFilePath;
+            ZipInternalPath = internalPath;
+            IsInZip         = true;
+
+            // Virtual path shown in breadcrumb / tab
+            var displayPath = zipFilePath + (string.IsNullOrEmpty(internalPath) ? "" : "\\" + internalPath.Replace('/', '\\'));
+            CurrentPath     = displayPath;
+
+            FilterText      = string.Empty;
+            IsFilterVisible = false;
+
+            LoadZipDirectory(zipFilePath, internalPath);
+
+            if (ActiveTabIndex >= 0 && ActiveTabIndex < Tabs.Count)
+                Tabs[ActiveTabIndex].Header = Path.GetFileName(zipFilePath);
+        }
+
+        private void LoadZipDirectory(string zipFilePath, string internalPath)
+        {
+            _allItems.Clear();
+            Items.Clear();
+
+            // Parent entry
+            _allItems.Add(new FileItem { Name = "..", IsDirectory = true, DisplaySize = "<UP>", FullPath = "" });
+
+            try
+            {
+                using var archive = ZipFile.OpenRead(zipFilePath);
+
+                // Normalize internal path: must end with '/' if non-empty
+                if (!string.IsNullOrEmpty(internalPath) && !internalPath.EndsWith('/'))
+                    internalPath += '/';
+
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var entry in archive.Entries)
+                {
+                    var name = entry.FullName.Replace('\\', '/');
+                    if (!name.StartsWith(internalPath, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    var remainder = name.Substring(internalPath.Length);
+                    if (string.IsNullOrEmpty(remainder)) continue;
+
+                    var parts     = remainder.Split('/');
+                    var firstName = parts[0];
+                    if (string.IsNullOrEmpty(firstName) || seen.Contains(firstName)) continue;
+                    seen.Add(firstName);
+
+                    bool isDir = parts.Length > 1 || remainder.EndsWith('/');
+
+                    // Virtual full path for navigation
+                    var vPath = zipFilePath + "\\" + (string.IsNullOrEmpty(internalPath)
+                        ? firstName : internalPath.TrimEnd('/') + "\\" + firstName);
+
+                    var item = new FileItem
+                    {
+                        Name        = firstName,
+                        IsDirectory = isDir,
+                        FullPath    = vPath,
+                        Extension   = isDir ? "" : Path.GetExtension(firstName).TrimStart('.').ToUpper(),
+                        Attributes  = "Z---"
+                    };
+
+                    if (!isDir)
+                    {
+                        item.SizeBytes    = entry.Length;
+                        item.DisplaySize  = FileItem.FormatSizePublic(entry.Length);
+                        item.DateModified = entry.LastWriteTime.DateTime;
+                        item.Icon         = IconHelper.GetFileIconByExtension("." + item.Extension);
+                    }
+                    else
+                    {
+                        item.Icon = IconHelper.GetFolderIcon();
+                    }
+
+                    _allItems.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusText = $"ZIP error: {ex.Message}";
+            }
+
+            ApplySort();
+            ApplyFilter();
+        }
+
+        private static bool IsZipPath(string path)
+        {
+            var lower = path.ToLowerInvariant().Replace('\\', '/');
+            return lower.Contains(".zip/");
+        }
+
+        private static (string zipFile, string internalPath) SplitZipPath(string path)
+        {
+            var normalized = path.Replace('\\', '/');
+            var lower      = normalized.ToLowerInvariant();
+            int idx        = lower.IndexOf(".zip/", StringComparison.Ordinal);
+            if (idx < 0) return (path, "");
+
+            var zipFile      = path.Substring(0, idx + 4);   // up to .zip
+            var internalPath = path.Substring(idx + 5);       // after .zip/
+            return (zipFile, internalPath);
+        }
+
+        /// <summary>Extract a single ZIP entry to a temp folder and return the temp path.</summary>
+        private static string? ExtractZipEntryToTemp(string zipFilePath, string entryName)
+        {
+            try
+            {
+                entryName = entryName.Replace('\\', '/').TrimStart('/');
+                var tempDir = Path.Combine(Path.GetTempPath(), "SwiftPanel",
+                    Path.GetFileNameWithoutExtension(zipFilePath));
+                Directory.CreateDirectory(tempDir);
+
+                using var archive = ZipFile.OpenRead(zipFilePath);
+                var entry = archive.Entries.FirstOrDefault(e =>
+                    e.FullName.Replace('\\', '/').Equals(entryName, StringComparison.OrdinalIgnoreCase));
+                if (entry == null) return null;
+
+                var destPath = Path.Combine(tempDir, entry.Name);
+                entry.ExtractToFile(destPath, overwrite: true);
+                return destPath;
+            }
+            catch { return null; }
         }
 
         // ─────────────────────────────────────────────────────────────────

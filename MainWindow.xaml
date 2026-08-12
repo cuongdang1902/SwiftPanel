@@ -22,7 +22,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="36"/>   <!-- Menu + Toolbar -->
             <RowDefinition Height="*"/>    <!-- Main content -->
-            <RowDefinition Height="22"/>   <!-- Status bar -->
+            <RowDefinition Height="38"/>   <!-- Status bar (2 rows) -->
         </Grid.RowDefinitions>
 
         <!-- ===== MENU + TOOLBAR ===== -->
@@ -35,6 +35,14 @@
             <!-- Toolbar buttons -->
             <Border Grid.Row="0" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,0,1">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0">
+                    <!-- Navigation history -->
+                    <Button Content="◀" FontSize="10" Padding="5,2" Margin="1,2"
+                            ToolTip="Back (Alt+←)"
+                            Command="{Binding ActivePanel.NavigateBackCommand}"/>
+                    <Button Content="►" FontSize="10" Padding="5,2" Margin="1,2"
+                            ToolTip="Forward (Alt+→)"
+                            Command="{Binding ActivePanel.NavigateForwardCommand}"/>
+                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
                     <Button Content="📁 New Folder" Command="{Binding NewFolderCommand}"
                             Padding="6,2" Margin="1,2" FontSize="10" ToolTip="New Folder (F7)"/>
                     <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
@@ -81,12 +89,14 @@
             </Border>
         </Grid>
 
-        <!-- ===== MAIN CONTENT: Two Panels + Splitter ===== -->
+        <!-- ===== MAIN CONTENT: Two Panels + Splitter + Viewer ===== -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" MinWidth="200"/>
                 <ColumnDefinition Width="4"/>
                 <ColumnDefinition Width="*" MinWidth="200"/>
+                <ColumnDefinition Width="0"  x:Name="ViewerSplitterCol"/>
+                <ColumnDefinition Width="0"  x:Name="ViewerCol" MinWidth="0"/>
             </Grid.ColumnDefinitions>
 
             <!-- LEFT PANEL -->
@@ -112,23 +122,84 @@
                                 DataContext="{Binding RightPanel}"
                                 IsActive="{Binding IsRightActive}"
                                 MainViewModel="{Binding}"/>
+
+            <!-- VIEWER SPLITTER (hidden until F3) -->
+            <GridSplitter Grid.Column="3" x:Name="ViewerSplitter"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Background="#404040"
+                          Cursor="SizeWE"
+                          ShowsPreview="True"
+                          Visibility="Collapsed"/>
+
+            <!-- F3 QUICK VIEWER PANEL -->
+            <controls:FileViewerPanel Grid.Column="4" x:Name="ViewerPanelControl"
+                                      DataContext="{Binding Viewer}"
+                                      Visibility="Collapsed"/>
         </Grid>
 
-        <!-- ===== STATUS BAR ===== -->
+        <!-- ===== STATUS BAR (2 rows: file info + disk usage) ===== -->
         <Border Grid.Row="2" Background="{StaticResource StatusBarBackgroundBrush}"
                 BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,1,0,0">
-            <Grid Margin="4,0">
+            <Grid Margin="4,1">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="4"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding LeftPanel.StatusText}"
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Left: file count status -->
+                <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding LeftPanel.StatusText}"
                            VerticalAlignment="Center" FontSize="10"
                            TextTrimming="CharacterEllipsis"/>
-                <TextBlock Grid.Column="2" Text="{Binding RightPanel.StatusText}"
+
+                <!-- Left: disk usage bar -->
+                <Grid Grid.Column="0" Grid.Row="1" Height="8" Margin="0,1,4,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ProgressBar Grid.Column="0" Value="{Binding LeftPanel.DriveUsedPercent, Mode=OneWay}"
+                                 Maximum="100" Height="6" VerticalAlignment="Center"
+                                 Foreground="#4CAF50" Background="#D0D0D0" BorderThickness="0">
+                        <ProgressBar.Style>
+                            <Style TargetType="ProgressBar">
+                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding LeftPanel.DriveUsedPercent, Converter={StaticResource BoolToVisibilityConverter}}" Value="Visible">
+                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ProgressBar.Style>
+                    </ProgressBar>
+                    <TextBlock Grid.Column="1" Text="{Binding LeftPanel.DriveSpaceText}"
+                               FontSize="9" Foreground="Gray" Margin="4,0,0,0"
+                               VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- Right: file count status -->
+                <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding RightPanel.StatusText}"
                            VerticalAlignment="Center" FontSize="10"
                            TextTrimming="CharacterEllipsis"/>
+
+                <!-- Right: disk usage bar -->
+                <Grid Grid.Column="2" Grid.Row="1" Height="8" Margin="0,1,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ProgressBar Grid.Column="0" Value="{Binding RightPanel.DriveUsedPercent, Mode=OneWay}"
+                                 Maximum="100" Height="6" VerticalAlignment="Center"
+                                 Foreground="#4CAF50" Background="#D0D0D0" BorderThickness="0"/>
+                    <TextBlock Grid.Column="1" Text="{Binding RightPanel.DriveSpaceText}"
+                               FontSize="9" Foreground="Gray" Margin="4,0,0,0"
+                               VerticalAlignment="Center"/>
+                </Grid>
             </Grid>
         </Border>
     </Grid>

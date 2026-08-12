@@ -5,6 +5,7 @@ using SwiftPanel.Services;
 using SwiftPanel.Views;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -24,13 +25,41 @@ namespace SwiftPanel.ViewModels
         public FilePanelViewModel ActivePanel   => IsLeftActive ? LeftPanel : RightPanel;
         public FilePanelViewModel InactivePanel => IsLeftActive ? RightPanel : LeftPanel;
 
+        // ── F3 Quick Viewer ───────────────────────────────────────────────
+        public FileViewerViewModel Viewer { get; } = new();
+        [ObservableProperty] private bool _isViewerOpen = false;
+
         public MainViewModel(AppSettings? settings = null)
         {
             var s = settings ?? new AppSettings();
             LeftPanel  = new FilePanelViewModel(s.LeftPath);
             RightPanel = new FilePanelViewModel(s.RightPath);
             ApplySettings(s);
+
+            // Auto-refresh viewer when panel selection changes
+            LeftPanel.PropertyChanged  += OnPanelSelectionChanged;
+            RightPanel.PropertyChanged += OnPanelSelectionChanged;
         }
+
+        private async void OnPanelSelectionChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(FilePanelViewModel.SelectedItem) && IsViewerOpen)
+                await Viewer.LoadAsync(ActivePanel.SelectedItem);
+        }
+
+        [RelayCommand]
+        public async Task ToggleViewer()
+        {
+            IsViewerOpen = !IsViewerOpen;
+            if (IsViewerOpen)
+                await Viewer.LoadAsync(ActivePanel.SelectedItem);
+            else
+                Viewer.Clear();
+        }
+
+        [RelayCommand]
+        public void CalculateFolderSizes()
+            => ActivePanel.CalculateFolderSizesCommand.Execute(null);
 
         /// <summary>Apply persisted settings to both panels.</summary>
         public void ApplySettings(AppSettings s)

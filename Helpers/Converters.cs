@@ -67,4 +67,15 @@ namespace SwiftPanel.Helpers
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
+
+    /// <summary>Collapses element when value is null or empty string.</summary>
+    public class NullToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => value is string s && !string.IsNullOrEmpty(s)
+               ? Visibility.Visible : Visibility.Collapsed;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
 }

@@ -13,7 +13,8 @@ namespace SwiftPanel
 
             // Load persisted settings and create ViewModel with them
             var settings = SettingsService.Load();
-            DataContext  = new MainViewModel(settings);
+            var vm       = new MainViewModel(settings);
+            DataContext  = vm;
 
             // Restore window geometry
             if (settings.WindowLeft >= 0 && settings.WindowTop >= 0)
@@ -27,19 +28,44 @@ namespace SwiftPanel
             if (settings.Maximized)
                 WindowState = WindowState.Maximized;
 
+            // Watch IsViewerOpen to toggle the viewer column
+            vm.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(MainViewModel.IsViewerOpen))
+                    SetViewerColumnWidth(vm.IsViewerOpen);
+            };
+
             // Save settings when window closes
             Closing += (_, _) =>
             {
-                if (DataContext is MainViewModel vm)
+                if (DataContext is MainViewModel mvm)
                 {
                     bool maximized = WindowState == WindowState.Maximized;
                     double w = maximized ? RestoreBounds.Width  : Width;
                     double h = maximized ? RestoreBounds.Height : Height;
                     double l = maximized ? RestoreBounds.Left   : Left;
                     double t = maximized ? RestoreBounds.Top    : Top;
-                    SettingsService.Save(vm.CaptureSettings(w, h, l, t, maximized));
+                    SettingsService.Save(mvm.CaptureSettings(w, h, l, t, maximized));
                 }
             };
+        }
+
+        private void SetViewerColumnWidth(bool open)
+        {
+            if (open)
+            {
+                ViewerCol.Width          = new GridLength(340, GridUnitType.Pixel);
+                ViewerSplitterCol.Width  = new GridLength(4);
+                ViewerSplitter.Visibility    = Visibility.Visible;
+                ViewerPanelControl.Visibility= Visibility.Visible;
+            }
+            else
+            {
+                ViewerCol.Width          = new GridLength(0);
+                ViewerSplitterCol.Width  = new GridLength(0);
+                ViewerSplitter.Visibility    = Visibility.Collapsed;
+                ViewerPanelControl.Visibility= Visibility.Collapsed;
+            }
         }
 
         // Open the ★ Bookmarks dropdown
@@ -126,6 +152,36 @@ namespace SwiftPanel
                 // Ctrl+M – Multi-rename
                 case Key.M when ctrl:
                     vm.MultiRenameCommand.Execute(null);
+                    e.Handled = true;
+                    break;
+
+                // F3 – Toggle Quick Viewer
+                case Key.F3:
+                    _ = vm.ToggleViewerCommand.ExecuteAsync(null);
+                    e.Handled = true;
+                    break;
+
+                // F4 – Open in editor
+                case Key.F4:
+                    vm.ActivePanel.OpenInEditorCommand.Execute(null);
+                    e.Handled = true;
+                    break;
+
+                // Ctrl+L – Calculate folder sizes
+                case Key.L when ctrl:
+                    vm.CalculateFolderSizesCommand.Execute(null);
+                    e.Handled = true;
+                    break;
+
+                // Alt+Left – Navigate back
+                case Key.Left when alt:
+                    vm.ActivePanel.NavigateBackCommand.Execute(null);
+                    e.Handled = true;
+                    break;
+
+                // Alt+Right – Navigate forward
+                case Key.Right when alt:
+                    vm.ActivePanel.NavigateForwardCommand.Execute(null);
                     e.Handled = true;
                     break;
 

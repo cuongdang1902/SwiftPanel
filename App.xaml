@@ -16,6 +16,7 @@
             <helpers:MarkedToFontWeightConverter      x:Key="MarkedToFontWeightConverter"/>
             <helpers:BoolToVisibilityConverter        x:Key="BoolToVisibilityConverter"/>
             <helpers:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <helpers:NullToVisibilityConverter        x:Key="NullToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

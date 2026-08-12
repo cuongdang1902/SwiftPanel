@@ -121,7 +121,7 @@ namespace SwiftPanel.Controls
                 btn.Click += (s, _) =>
                 {
                     if (DataContext is FilePanelViewModel vm && btn.Tag is string path)
-                        vm.NavigateToCommand.Execute(path);
+                        vm.NavigateTo(path);
                 };
                 DriveBarPanel.Children.Add(btn);
             }
@@ -154,7 +154,7 @@ namespace SwiftPanel.Controls
                 };
                 btn.Click += (s, _) =>
                 {
-                    if (btn.Tag is string p) vm.NavigateToCommand.Execute(p);
+                    if (btn.Tag is string p) vm.NavigateTo(p);
                 };
                 BreadcrumbPanel.Children.Add(btn);
 

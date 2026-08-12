@@ -1,0 +1,109 @@
+<UserControl x:Class="SwiftPanel.Controls.FileViewerPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SwiftPanel.ViewModels">
+
+    <UserControl.Resources>
+        <!-- Text style for content areas -->
+        <Style x:Key="ContentTextBox" TargetType="TextBox">
+            <Setter Property="IsReadOnly"            Value="True"/>
+            <Setter Property="BorderThickness"       Value="0"/>
+            <Setter Property="Background"            Value="#1E1E1E"/>
+            <Setter Property="Foreground"            Value="#D4D4D4"/>
+            <Setter Property="FontFamily"            Value="Consolas, Courier New"/>
+            <Setter Property="FontSize"              Value="11"/>
+            <Setter Property="Padding"               Value="8"/>
+            <Setter Property="VerticalScrollBarVisibility"   Value="Auto"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="TextWrapping"          Value="NoWrap"/>
+            <Setter Property="AcceptsReturn"         Value="True"/>
+            <Setter Property="FocusVisualStyle"      Value="{x:Null}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- Header -->
+            <RowDefinition Height="*"/>      <!-- Content -->
+            <RowDefinition Height="Auto"/>   <!-- Footer -->
+        </Grid.RowDefinitions>
+
+        <!-- ── HEADER ── -->
+        <Border Grid.Row="0" Background="#252526" Padding="8,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding FileName}"
+                           Foreground="#CCCCCC" FontWeight="SemiBold"
+                           FontSize="11" FontFamily="Segoe UI"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding FileName}"/>
+
+                <Border Grid.Column="1"
+                        Background="#3C3C3C" CornerRadius="3"
+                        Padding="5,1" Margin="6,0,0,0"
+                        Visibility="{Binding ContentType_Label, Converter={StaticResource NullToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ContentType_Label}"
+                               Foreground="#9CDCFE" FontSize="9"
+                               FontFamily="Consolas"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ── CONTENT AREA ── -->
+        <Grid Grid.Row="1">
+
+            <!-- Loading spinner -->
+            <Border Background="#1E1E1E"
+                    Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="⏳" FontSize="32" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Loading…" Foreground="#808080" FontSize="11"
+                               HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- No file selected -->
+            <Border Background="#252526"
+                    Visibility="{Binding ShowEmpty, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.4">
+                    <TextBlock Text="👁" FontSize="48" HorizontalAlignment="Center"/>
+                    <TextBlock Text="F3  Quick View" Foreground="#808080" FontSize="12"
+                               HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                    <TextBlock Text="Select a file in the panel" Foreground="#606060" FontSize="10"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Image viewer -->
+            <Border Background="#1A1A1A"
+                    Visibility="{Binding ShowImage, Converter={StaticResource BoolToVisibilityConverter}}">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto">
+                    <Image Source="{Binding ImageContent}"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           Margin="4"/>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Text / Hex / Directory viewer -->
+            <TextBox Style="{StaticResource ContentTextBox}"
+                     Text="{Binding TextContent, Mode=OneWay}"
+                     Visibility="{Binding ShowText, Converter={StaticResource BoolToVisibilityConverter}}"/>
+        </Grid>
+
+        <!-- ── FOOTER ── -->
+        <Border Grid.Row="2" Background="#007ACC" Padding="8,3">
+            <TextBlock Text="{Binding FileInfo}"
+                       Foreground="White" FontSize="10"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"/>
+        </Border>
+    </Grid>
+</UserControl>

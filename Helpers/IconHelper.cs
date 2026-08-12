@@ -47,6 +47,14 @@ namespace SwiftPanel.Helpers
         public static ImageSource? GetLargeFileIcon(string filePath)
             => GetShellIcon(filePath, isFolder: false, small: false);
 
+        /// <summary>Small icon by extension only – doesn't need the file to exist (for ZIP entries).</summary>
+        public static ImageSource? GetFileIconByExtension(string extension)
+        {
+            // Use a fake filename with the extension + USEFILEATTRIBUTES so shell32 looks up by type only
+            var fakePath = string.IsNullOrEmpty(extension) ? "file" : $"file{extension}";
+            return GetShellIconByAttr(fakePath, small: true);
+        }
+
         /// <summary>32×32 large folder icon.</summary>
         public static ImageSource? GetLargeFolderIcon()
             => GetShellIcon(string.Empty, isFolder: true, small: false);
@@ -79,14 +87,27 @@ namespace SwiftPanel.Helpers
 
                 DestroyIcon(shinfo.hIcon);
 
-                // Freeze so it can cross thread boundaries
                 if (bitmap.CanFreeze) bitmap.Freeze();
                 return bitmap;
             }
-            catch
+            catch { return null; }
+        }
+
+        /// <summary>Icon by extension using USEFILEATTRIBUTES – works without the real file.</summary>
+        private static ImageSource? GetShellIconByAttr(string fakePath, bool small)
+        {
+            try
             {
-                return null;
+                var shinfo = new SHFILEINFO();
+                uint flags = SHGFI_ICON | (small ? SHGFI_SMALLICON : SHGFI_LARGEICON) | SHGFI_USEFILEATTRIBUTES;
+                SHGetFileInfo(fakePath, FILE_ATTRIBUTE_NORMAL, ref shinfo, (uint)Marshal.SizeOf(shinfo), flags);
+                if (shinfo.hIcon == IntPtr.Zero) return null;
+                var bmp = Imaging.CreateBitmapSourceFromHIcon(shinfo.hIcon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                DestroyIcon(shinfo.hIcon);
+                if (bmp.CanFreeze) bmp.Freeze();
+                return bmp;
             }
+            catch { return null; }
         }
     }
 }
