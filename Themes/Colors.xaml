@@ -1,0 +1,127 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===== SpeedCommander Silver Theme ===== -->
+
+    <!-- Background colors -->
+    <SolidColorBrush x:Key="AppBackgroundBrush"       Color="#D4D0C8"/>
+    <SolidColorBrush x:Key="PanelBackgroundBrush"     Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ToolbarBackgroundBrush"   Color="#ECECEC"/>
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#C8C4BC"/>
+
+    <!-- Splitter -->
+    <SolidColorBrush x:Key="SplitterBrush"      Color="#1E6FBF"/>
+    <SolidColorBrush x:Key="SplitterHoverBrush" Color="#2B8FFF"/>
+
+    <!-- Drive bar -->
+    <SolidColorBrush x:Key="DriveBarBackgroundBrush"  Color="#D4D0C8"/>
+    <SolidColorBrush x:Key="DriveButtonBrush"         Color="#E0DDD8"/>
+    <SolidColorBrush x:Key="DriveButtonHoverBrush"    Color="#B8D0E8"/>
+    <SolidColorBrush x:Key="DriveButtonBorderBrush"   Color="#A0A0A0"/>
+
+    <!-- Path bar -->
+    <SolidColorBrush x:Key="PathBarBackgroundBrush" Color="#F0EEE8"/>
+    <SolidColorBrush x:Key="PathBarBorderBrush"     Color="#A8A8A0"/>
+
+    <!-- Column headers -->
+    <SolidColorBrush x:Key="ColumnHeaderBackgroundBrush"  Color="#C8C4BC"/>
+    <SolidColorBrush x:Key="ColumnHeaderBorderBrush"      Color="#808080"/>
+    <SolidColorBrush x:Key="ColumnHeaderForegroundBrush"  Color="#000000"/>
+
+    <!-- File list -->
+    <SolidColorBrush x:Key="FileListBackgroundBrush"     Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="FileListAlternateRowBrush"   Color="#F8F8F8"/>
+    <SolidColorBrush x:Key="FileListBorderBrush"         Color="#808080"/>
+
+    <!-- Selection colors -->
+    <SolidColorBrush x:Key="SelectionActiveBrush"        Color="#316AC5"/>
+    <SolidColorBrush x:Key="SelectionActiveTextBrush"    Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SelectionInactiveBrush"      Color="#AABBCC"/>
+    <SolidColorBrush x:Key="SelectionInactiveTextBrush"  Color="#000000"/>
+
+    <!-- Tab bar -->
+    <SolidColorBrush x:Key="TabBarBackgroundBrush" Color="#D4D0C8"/>
+    <SolidColorBrush x:Key="TabActiveBrush"        Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TabInactiveBrush"      Color="#C0BDB5"/>
+    <SolidColorBrush x:Key="TabBorderBrush"        Color="#808080"/>
+
+    <!-- Active panel accent -->
+    <SolidColorBrush x:Key="ActivePanelBorderBrush"   Color="#1E6FBF"/>
+    <SolidColorBrush x:Key="InactivePanelBorderBrush" Color="Transparent"/>
+
+    <!-- Text colors -->
+    <SolidColorBrush x:Key="PrimaryTextBrush"   Color="#000000"/>
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#404040"/>
+    <SolidColorBrush x:Key="FolderTextBrush"    Color="#000080"/>
+
+    <!-- Font sizes -->
+    <system:Double xmlns:system="clr-namespace:System;assembly=mscorlib" x:Key="SmallFontSize">9</system:Double>
+    <system:Double xmlns:system="clr-namespace:System;assembly=mscorlib" x:Key="NormalFontSize">11</system:Double>
+
+    <!-- ===== Column Header Button Style ===== -->
+    <!-- Transparent button used for sortable column headers -->
+    <Style x:Key="ColumnHeaderButtonStyle" TargetType="Button">
+        <Setter Property="Background"        Value="Transparent"/>
+        <Setter Property="BorderThickness"   Value="0"/>
+        <Setter Property="HorizontalAlignment"        Value="Stretch"/>
+        <Setter Property="VerticalAlignment"          Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+        <Setter Property="Padding"           Value="4,0"/>
+        <Setter Property="Cursor"            Value="Hand"/>
+        <Setter Property="FocusVisualStyle"  Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderThickness="0">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#B0C8E0"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#8AAAC8"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Breadcrumb Segment Button Style ===== -->
+    <Style x:Key="BreadcrumbButtonStyle" TargetType="Button">
+        <Setter Property="Background"        Value="Transparent"/>
+        <Setter Property="BorderThickness"   Value="0"/>
+        <Setter Property="Padding"           Value="2,0"/>
+        <Setter Property="Cursor"            Value="Hand"/>
+        <Setter Property="FocusVisualStyle"  Value="{x:Null}"/>
+        <Setter Property="FontSize"          Value="10"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="2">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#C0D8F0"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="#A0BCD8"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

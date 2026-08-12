@@ -1,0 +1,75 @@
+<Window x:Class="SwiftPanel.Views.SearchDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Find Files"
+        Width="560" Height="420"
+        WindowStartupLocation="CenterOwner"
+        Background="#F0EEE8"
+        FontFamily="Segoe UI" FontSize="11">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="8"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Search input -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="90"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="80"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Search name:" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" x:Name="SearchBox" KeyDown="OnSearchKeyDown"
+                     Padding="4,3" BorderBrush="#A0A0A0"/>
+            <Button Grid.Column="3" Content="Find" Click="OnFind"
+                    Padding="8,3" IsDefault="True"
+                    Background="#DDEEFF" BorderBrush="#808080"/>
+        </Grid>
+
+        <!-- Search in -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="90"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Search in:" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" x:Name="SearchPathBox"
+                     Padding="4,3" BorderBrush="#A0A0A0"/>
+        </Grid>
+
+        <!-- Options -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal">
+            <CheckBox x:Name="CaseSensitiveCheck" Content="Case sensitive" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <CheckBox x:Name="SubfoldersCheck" Content="Search subfolders" IsChecked="True" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Results list -->
+        <ListBox Grid.Row="6" x:Name="ResultsList"
+                 Background="White" BorderBrush="#808080"
+                 FontSize="10" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 MouseDoubleClick="OnResultDoubleClick"
+                 SelectionMode="Single"/>
+
+        <!-- Status + Close -->
+        <Grid Grid.Row="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="80"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" x:Name="StatusLabel"
+                       VerticalAlignment="Center" Foreground="#404040"/>
+            <Button Grid.Column="1" Content="Close" IsCancel="True"
+                    Click="OnClose" Padding="8,3"/>
+        </Grid>
+    </Grid>
+</Window>

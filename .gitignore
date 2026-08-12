@@ -1,0 +1,49 @@
+# ── Build outputs ──────────────────────────────────────────────
+bin/
+obj/
+out/
+
+# ── .NET / MSBuild ─────────────────────────────────────────────
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vs/
+.vs/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ── NuGet ──────────────────────────────────────────────────────
+*.nupkg
+*.snupkg
+**/[Pp]ackages/
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+nuget.config
+
+# ── Rider / JetBrains ──────────────────────────────────────────
+.idea/
+*.sln.iml
+
+# ── Visual Studio Code ─────────────────────────────────────────
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ── OS ─────────────────────────────────────────────────────────
+Thumbs.db
+Desktop.ini
+.DS_Store
+ehthumbs.db
+
+# ── Logs & temp ────────────────────────────────────────────────
+*.log
+*.tmp
+*.temp
+
+# ── Publish ────────────────────────────────────────────────────
+publish/

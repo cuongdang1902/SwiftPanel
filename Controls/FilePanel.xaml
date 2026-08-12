@@ -1,0 +1,406 @@
+<UserControl x:Class="SwiftPanel.Controls.FilePanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SwiftPanel.ViewModels">
+
+    <UserControl.Resources>
+        <!-- NOTE: Converters registered globally in App.xaml -->
+
+        <!-- ══════════════════════════════════════════════════════════════
+             ItemsPanelTemplates – one per view mode
+        ══════════════════════════════════════════════════════════════ -->
+
+        <!-- Details / List: plain vertical stack (virtualizing) -->
+        <ItemsPanelTemplate x:Key="DetailsPanelTemplate">
+            <VirtualizingStackPanel/>
+        </ItemsPanelTemplate>
+
+        <!-- LargeIcons / Thumbnails: horizontal wrap -->
+        <ItemsPanelTemplate x:Key="IconsPanelTemplate">
+            <WrapPanel Orientation="Horizontal" IsItemsHost="True"/>
+        </ItemsPanelTemplate>
+
+        <!-- List view: vertical wrap (multi-column list) -->
+        <ItemsPanelTemplate x:Key="ListPanelTemplate">
+            <WrapPanel Orientation="Vertical" IsItemsHost="True"/>
+        </ItemsPanelTemplate>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             DataTemplates – one per view mode
+        ══════════════════════════════════════════════════════════════ -->
+
+        <!-- ── DETAILS template (existing detailed row) ── -->
+        <DataTemplate x:Key="DetailsItemTemplate">
+            <Border Background="{Binding IsMarked, Converter={StaticResource MarkedToBrushConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="45"/>
+                        <ColumnDefinition Width="70"/>
+                        <ColumnDefinition Width="130"/>
+                        <ColumnDefinition Width="40"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Image Grid.Column="0" Source="{Binding Icon}" Width="16" Height="16"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           VerticalAlignment="Center"/>
+
+                    <!-- Normal name label -->
+                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}" Margin="3,0"
+                               FontWeight="{Binding IsMarked, Converter={StaticResource MarkedToFontWeightConverter}}"
+                               Foreground="{Binding IsDirectory, Converter={StaticResource BoolToFolderColorConverter}}"
+                               VerticalAlignment="Center"
+                               Visibility="{Binding IsRenaming, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+
+                    <!-- Inline rename TextBox -->
+                    <TextBox Grid.Column="1"
+                             Text="{Binding EditingName, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="2,0" Padding="1,0" FontSize="10"
+                             BorderThickness="1" BorderBrush="#316AC5" Background="White"
+                             Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibilityConverter}}"
+                             GotFocus="OnRenameBoxGotFocus"
+                             LostFocus="OnRenameBoxLostFocus"
+                             KeyDown="OnRenameBoxKeyDown"/>
+
+                    <TextBlock Grid.Column="2" Text="{Binding Extension}"   Margin="3,0" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="3" Text="{Binding DisplaySize}" Margin="3,0" TextAlignment="Right" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="4" Text="{Binding DisplayDate}" Margin="3,0" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="5" Text="{Binding Attributes}"  Margin="3,0" FontFamily="Courier New" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- ── LIST template: small icon + name only, fixed-width tile ── -->
+        <DataTemplate x:Key="ListItemTemplate">
+            <Border Background="{Binding IsMarked, Converter={StaticResource MarkedToBrushConverter}}"
+                    Width="220" Margin="0,1">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="{Binding Icon}" Width="16" Height="16"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           VerticalAlignment="Center" Margin="2,0"/>
+                    <TextBlock Text="{Binding DisplayName}" Margin="3,0"
+                               FontWeight="{Binding IsMarked, Converter={StaticResource MarkedToFontWeightConverter}}"
+                               Foreground="{Binding IsDirectory, Converter={StaticResource BoolToFolderColorConverter}}"
+                               VerticalAlignment="Center"
+                               MaxWidth="194" TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding DisplayName}"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- ── LARGE ICONS template: 32×32 icon + name below ── -->
+        <DataTemplate x:Key="LargeIconsItemTemplate">
+            <Border Background="{Binding IsMarked, Converter={StaticResource MarkedToBrushConverter}}"
+                    Width="90" Margin="4" Padding="4">
+                <StackPanel HorizontalAlignment="Center">
+                    <Image Source="{Binding DisplayThumbnail}" Width="48" Height="48"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding DisplayName}"
+                               TextAlignment="Center" TextWrapping="Wrap"
+                               MaxHeight="34" FontSize="9.5"
+                               FontWeight="{Binding IsMarked, Converter={StaticResource MarkedToFontWeightConverter}}"
+                               Foreground="{Binding IsDirectory, Converter={StaticResource BoolToFolderColorConverter}}"
+                               Margin="0,3,0,0"
+                               ToolTip="{Binding DisplayName}"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- ── THUMBNAILS template: 96×96 preview + name below ── -->
+        <DataTemplate x:Key="ThumbnailsItemTemplate">
+            <Border Background="{Binding IsMarked, Converter={StaticResource MarkedToBrushConverter}}"
+                    Width="128" Margin="5" Padding="4">
+                <StackPanel HorizontalAlignment="Center">
+                    <!-- Preview frame -->
+                    <Border Width="100" Height="100"
+                            Background="#F0EEE8"
+                            BorderBrush="#C0BCB4" BorderThickness="1"
+                            HorizontalAlignment="Center">
+                        <Image Source="{Binding DisplayThumbnail}"
+                               Width="96" Height="96"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+                    <TextBlock Text="{Binding DisplayName}"
+                               TextAlignment="Center" TextWrapping="Wrap"
+                               MaxHeight="34" FontSize="9.5"
+                               FontWeight="{Binding IsMarked, Converter={StaticResource MarkedToFontWeightConverter}}"
+                               Foreground="{Binding IsDirectory, Converter={StaticResource BoolToFolderColorConverter}}"
+                               Margin="0,3,0,0"
+                               ToolTip="{Binding DisplayName}"/>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- ── View mode button style ── -->
+        <Style x:Key="ViewBtnStyle" TargetType="Button">
+            <Setter Property="Background"        Value="Transparent"/>
+            <Setter Property="BorderThickness"   Value="0"/>
+            <Setter Property="Padding"           Value="4,1"/>
+            <Setter Property="FontSize"          Value="13"/>
+            <Setter Property="Cursor"            Value="Hand"/>
+            <Setter Property="FocusVisualStyle"  Value="{x:Null}"/>
+            <Setter Property="Margin"            Value="1,1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                CornerRadius="3" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#B8D0E8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#90B8D8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- Active-panel top border -->
+    <UserControl.Style>
+        <Style TargetType="UserControl">
+            <Setter Property="BorderThickness" Value="0,2,0,0"/>
+            <Setter Property="BorderBrush"     Value="Transparent"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource Self}}" Value="True">
+                    <Setter Property="BorderBrush" Value="#1E6FBF"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Style>
+
+    <Border BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            Background="#D4D0C8">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="22"/>   <!-- Row 0: Drive bar + view buttons -->
+                <RowDefinition Height="22"/>   <!-- Row 1: Breadcrumb -->
+                <RowDefinition Height="22" x:Name="ColumnHeaderRow"/>  <!-- Row 2: Column headers -->
+                <RowDefinition Height="Auto"/> <!-- Row 3: Quick filter (hidden by default) -->
+                <RowDefinition Height="*"/>    <!-- Row 4: File list -->
+                <RowDefinition Height="28"/>   <!-- Row 5: Tab bar -->
+            </Grid.RowDefinitions>
+
+            <!-- ===== DRIVE BAR + VIEW SWITCHER ===== -->
+            <Border Grid.Row="0" Background="#D4D0C8"
+                    BorderBrush="#808080" BorderThickness="0,0,0,1">
+                <DockPanel>
+                    <!-- View mode toggle buttons (right-docked) -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                x:Name="ViewModeButtonsPanel"
+                                VerticalAlignment="Center" Margin="2,0">
+                        <Button Style="{StaticResource ViewBtnStyle}"
+                                Tag="Details" Click="OnViewModeClick"
+                                ToolTip="Details view  (Ctrl+1)">☰</Button>
+                        <Button Style="{StaticResource ViewBtnStyle}"
+                                Tag="List" Click="OnViewModeClick"
+                                ToolTip="List view  (Ctrl+2)">▤</Button>
+                        <Button Style="{StaticResource ViewBtnStyle}"
+                                Tag="LargeIcons" Click="OnViewModeClick"
+                                ToolTip="Large Icons  (Ctrl+3)">⊞</Button>
+                        <Button Style="{StaticResource ViewBtnStyle}"
+                                Tag="Thumbnails" Click="OnViewModeClick"
+                                ToolTip="Thumbnails  (Ctrl+4)">▣</Button>
+                    </StackPanel>
+
+                    <!-- Drive buttons (left, scrollable) -->
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden">
+                        <StackPanel x:Name="DriveBarPanel" Orientation="Horizontal"
+                                    VerticalAlignment="Center" Margin="2,0"/>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- ===== BREADCRUMB PATH BAR ===== -->
+            <Border Grid.Row="1" Background="#F0EEE8"
+                    BorderBrush="#A8A8A0" BorderThickness="1,0,1,1"
+                    Margin="0,0,0,1">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden"
+                              x:Name="BreadcrumbScrollViewer">
+                    <StackPanel x:Name="BreadcrumbPanel" Orientation="Horizontal"
+                                VerticalAlignment="Center"/>
+                </ScrollViewer>
+            </Border>
+
+            <!-- ===== COLUMN HEADERS (Details only) ===== -->
+            <Grid Grid.Row="2" Background="#C8C4BC" x:Name="ColumnHeadersGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="45"/>
+                    <ColumnDefinition Width="70"/>
+                    <ColumnDefinition Width="130"/>
+                    <ColumnDefinition Width="40"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" BorderBrush="#808080" BorderThickness="0,0,1,1"/>
+
+                <Border Grid.Column="1" BorderBrush="#808080" BorderThickness="0,0,1,1">
+                    <Button Style="{StaticResource ColumnHeaderButtonStyle}"
+                            Tag="Name" Click="OnColumnHeaderClick">
+                        <TextBlock FontSize="10" FontWeight="Bold">
+                            <Run Text="Name"/><Run Text="{Binding NameSortArrow, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Button>
+                </Border>
+
+                <Border Grid.Column="2" BorderBrush="#808080" BorderThickness="0,0,1,1">
+                    <Button Style="{StaticResource ColumnHeaderButtonStyle}"
+                            Tag="Extension" Click="OnColumnHeaderClick">
+                        <TextBlock FontSize="10" FontWeight="Bold">
+                            <Run Text="Ext"/><Run Text="{Binding ExtSortArrow, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Button>
+                </Border>
+
+                <Border Grid.Column="3" BorderBrush="#808080" BorderThickness="0,0,1,1">
+                    <Button Style="{StaticResource ColumnHeaderButtonStyle}"
+                            Tag="Size" Click="OnColumnHeaderClick">
+                        <TextBlock FontSize="10" FontWeight="Bold" TextAlignment="Right">
+                            <Run Text="Size"/><Run Text="{Binding SizeSortArrow, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Button>
+                </Border>
+
+                <Border Grid.Column="4" BorderBrush="#808080" BorderThickness="0,0,1,1">
+                    <Button Style="{StaticResource ColumnHeaderButtonStyle}"
+                            Tag="Date" Click="OnColumnHeaderClick">
+                        <TextBlock FontSize="10" FontWeight="Bold">
+                            <Run Text="Date"/><Run Text="{Binding DateSortArrow, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Button>
+                </Border>
+
+                <Border Grid.Column="5" BorderBrush="#808080" BorderThickness="0,0,0,1">
+                    <Button Style="{StaticResource ColumnHeaderButtonStyle}"
+                            Tag="Attributes" Click="OnColumnHeaderClick">
+                        <TextBlock FontSize="10" FontWeight="Bold">
+                            <Run Text="Attr"/><Run Text="{Binding AttributesSortArrow, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Button>
+                </Border>
+            </Grid>
+
+            <!-- ===== QUICK FILTER BAR ===== -->
+            <Border Grid.Row="3" Background="#FFFDE8"
+                    BorderBrush="#C8A800" BorderThickness="0,0,0,1"
+                    Visibility="{Binding IsFilterVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                    Padding="2,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="🔍 Filter: " FontSize="10"
+                               VerticalAlignment="Center" Margin="2,0,4,0" Foreground="#806000"/>
+                    <TextBox  Grid.Column="1" x:Name="FilterBox"
+                              Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                              FontSize="10" Padding="2,1" BorderThickness="1" BorderBrush="#C8A800"
+                              Background="#FFFFF0"
+                              GotFocus="OnFilterBoxGotFocus"
+                              KeyDown="OnFilterBoxKeyDown"/>
+                    <Button Grid.Column="2" Content="✕" FontSize="10"
+                            Background="Transparent" BorderThickness="0"
+                            Padding="4,0" Cursor="Hand"
+                            ToolTip="Close filter (Esc)"
+                            Click="OnFilterClose"/>
+                </Grid>
+            </Border>
+
+            <!-- ===== FILE LIST ===== -->
+            <ListView Grid.Row="4"
+                      x:Name="FileListView"
+                      ItemsSource="{Binding Items}"
+                      SelectedItem="{Binding SelectedItem}"
+                      Background="White"
+                      BorderBrush="#808080"
+                      BorderThickness="1,0,1,0"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      SelectionMode="Extended"
+                      AllowDrop="True"
+                      Drop="OnFileDrop"
+                      DragEnter="OnDragEnter"
+                      DragLeave="OnDragLeave">
+
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="Padding"                    Value="0,1"/>
+                        <Setter Property="Margin"                     Value="0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="FontSize"                   Value="10"/>
+                        <Setter Property="VerticalContentAlignment"   Value="Center"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#316AC5"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsSelected"  Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="Background" Value="#C8DCF8"/>
+                            </MultiTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.ItemContainerStyle>
+
+                <!-- ItemTemplate is set in code-behind (SwitchViewMode) -->
+
+                <!-- Context menu -->
+                <ListView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Open"                        Click="OnContextOpen" FontWeight="Bold"/>
+                        <Separator/>
+                        <MenuItem Header="Copy        F5"              Click="OnContextCopy"/>
+                        <MenuItem Header="Move        F6"              Click="OnContextMove"/>
+                        <Separator/>
+                        <MenuItem Header="Delete      F8"              Click="OnContextDelete"/>
+                        <MenuItem Header="Rename      F2"              Click="OnContextRename"/>
+                        <Separator/>
+                        <MenuItem Header="Mark / Unmark   Space"       Click="OnContextMark"/>
+                        <MenuItem Header="Mark All        Num +"       Click="OnContextMarkAll"/>
+                        <MenuItem Header="Unmark All      Num -"       Click="OnContextUnmarkAll"/>
+                        <MenuItem Header="Invert Marks    Num *"       Click="OnContextInvertMarks"/>
+                        <Separator/>
+                        <MenuItem Header="Copy Path  Ctrl+Shift+C"     Click="OnContextCopyPath"/>
+                        <Separator/>
+                        <MenuItem Header="View"                        x:Name="ViewModeMenu">
+                            <MenuItem Header="Details     Ctrl+1"      Click="OnContextViewDetails"/>
+                            <MenuItem Header="List        Ctrl+2"      Click="OnContextViewList"/>
+                            <MenuItem Header="Large Icons Ctrl+3"      Click="OnContextViewLargeIcons"/>
+                            <MenuItem Header="Thumbnails  Ctrl+4"      Click="OnContextViewThumbnails"/>
+                        </MenuItem>
+                        <Separator/>
+                        <MenuItem Header="New Folder  F7"              Click="OnContextNewFolder"/>
+                        <Separator/>
+                        <MenuItem Header="Show/Hide Hidden  Ctrl+H"    Click="OnContextToggleHidden"/>
+                        <Separator/>
+                        <MenuItem Header="Open Terminal   Ctrl+T"      Click="OnContextTerminal"/>
+                        <MenuItem Header="Properties      Alt+Enter"   Click="OnContextProperties"/>
+                    </ContextMenu>
+                </ListView.ContextMenu>
+            </ListView>
+
+            <!-- ===== TAB BAR ===== -->
+            <Border Grid.Row="5" Background="#D4D0C8"
+                    BorderBrush="#808080" BorderThickness="1,1,1,0">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <StackPanel Orientation="Horizontal" x:Name="TabBarPanel"/>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>
