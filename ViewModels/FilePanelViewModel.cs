@@ -124,14 +124,25 @@ namespace SwiftPanel.ViewModels
             if (!Directory.Exists(path)) return;
 
             // Push to history
-            if (pushHistory && !string.IsNullOrEmpty(CurrentPath) && CurrentPath != path)
+            if (pushHistory && path != CurrentPath)
             {
-                if (_navIndex < _navHistory.Count - 1)
+                if (_navHistory.Count == 0 && !string.IsNullOrEmpty(CurrentPath))
+                    _navHistory.Add(CurrentPath);
+
+                if (_navIndex < _navHistory.Count - 1 && _navIndex >= 0)
                     _navHistory.RemoveRange(_navIndex + 1, _navHistory.Count - _navIndex - 1);
-                _navHistory.Add(CurrentPath);
+
+                _navHistory.Add(path);
                 _navIndex = _navHistory.Count - 1;
+
                 OnPropertyChanged(nameof(CanNavigateBack));
                 OnPropertyChanged(nameof(CanNavigateForward));
+            }
+
+            if (ActiveTabIndex >= 0 && ActiveTabIndex < Tabs.Count)
+            {
+                Tabs[ActiveTabIndex].Header = Path.GetFileName(path).IfEmpty(path);
+                Tabs[ActiveTabIndex].Path = path;
             }
 
             IsInZip    = false;
@@ -141,9 +152,6 @@ namespace SwiftPanel.ViewModels
             LoadDirectory(path);
             SetupWatcher(path);
             UpdateDriveInfo(path);
-
-            if (ActiveTabIndex >= 0 && ActiveTabIndex < Tabs.Count)
-                Tabs[ActiveTabIndex].Header = Path.GetFileName(path).IfEmpty(path);
         }
 
         [RelayCommand]
@@ -688,31 +696,37 @@ namespace SwiftPanel.ViewModels
         {
             if (!File.Exists(zipFilePath)) return;
 
-            if (pushHistory && !string.IsNullOrEmpty(CurrentPath))
-            {
-                if (_navIndex < _navHistory.Count - 1)
-                    _navHistory.RemoveRange(_navIndex + 1, _navHistory.Count - _navIndex - 1);
-                _navHistory.Add(CurrentPath);
-                _navIndex = _navHistory.Count - 1;
-                OnPropertyChanged(nameof(CanNavigateBack));
-                OnPropertyChanged(nameof(CanNavigateForward));
-            }
-
             ZipFilePath     = zipFilePath;
             ZipInternalPath = internalPath;
             IsInZip         = true;
 
-            // Virtual path shown in breadcrumb / tab
             var displayPath = zipFilePath + (string.IsNullOrEmpty(internalPath) ? "" : "\\" + internalPath.Replace('/', '\\'));
-            CurrentPath     = displayPath;
 
+            if (pushHistory && displayPath != CurrentPath)
+            {
+                if (_navHistory.Count == 0 && !string.IsNullOrEmpty(CurrentPath))
+                    _navHistory.Add(CurrentPath);
+
+                if (_navIndex < _navHistory.Count - 1 && _navIndex >= 0)
+                    _navHistory.RemoveRange(_navIndex + 1, _navHistory.Count - _navIndex - 1);
+
+                _navHistory.Add(displayPath);
+                _navIndex = _navHistory.Count - 1;
+
+                OnPropertyChanged(nameof(CanNavigateBack));
+                OnPropertyChanged(nameof(CanNavigateForward));
+            }
+            if (ActiveTabIndex >= 0 && ActiveTabIndex < Tabs.Count)
+            {
+                Tabs[ActiveTabIndex].Header = Path.GetFileName(zipFilePath);
+                Tabs[ActiveTabIndex].Path = displayPath;
+            }
+
+            CurrentPath     = displayPath;
             FilterText      = string.Empty;
             IsFilterVisible = false;
 
             LoadZipDirectory(zipFilePath, internalPath);
-
-            if (ActiveTabIndex >= 0 && ActiveTabIndex < Tabs.Count)
-                Tabs[ActiveTabIndex].Header = Path.GetFileName(zipFilePath);
         }
 
         private void LoadZipDirectory(string zipFilePath, string internalPath)

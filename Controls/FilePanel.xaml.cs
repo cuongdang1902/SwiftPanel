@@ -1,9 +1,11 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using SwiftPanel.Models;
 using SwiftPanel.ViewModels;
 
@@ -83,7 +85,11 @@ namespace SwiftPanel.Controls
         private void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName is nameof(FilePanelViewModel.CurrentPath))
+            {
                 RefreshBreadcrumb();
+                RefreshDriveBarHighlight();   // update active-drive blue border
+                RefreshTabBar();              // update tab names instantly
+            }
             if (e.PropertyName is nameof(FilePanelViewModel.ActiveTabIndex) or nameof(FilePanelViewModel.Tabs))
                 RefreshTabBar();
             if (e.PropertyName is nameof(FilePanelViewModel.ViewMode)
@@ -96,34 +102,218 @@ namespace SwiftPanel.Controls
             => RefreshTabBar();
 
         // ─────────────────────────────────────────────────────────────────
-        // Drive Bar
         // ─────────────────────────────────────────────────────────────────
+        // Drive Bar  (SpeedCommander 13 style)
+        // ─────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Builds a vector HDD icon matching SpeedCommander 13's compact drive-bar style.
+        /// Shape: rounded-rect body + top-cap + small platter circle.
+        /// </summary>
+        private static UIElement MakeDriveIcon(DriveType driveType)
+        {
+            // Colours
+            var bodyColor = driveType switch
+            {
+                DriveType.CDRom   => Color.FromRgb(0x80, 0x80, 0x80),
+                DriveType.Network => Color.FromRgb(0x00, 0x70, 0xC0),
+                DriveType.Ram     => Color.FromRgb(0x20, 0x90, 0x40),
+                _                 => Color.FromRgb(0x1F, 0x5F, 0xB0)   // Fixed / Removable
+            };
+            var bodyBrush  = new SolidColorBrush(bodyColor);
+            var lightBrush = new SolidColorBrush(Color.FromRgb(0xB8, 0xD4, 0xF0));
+            var darkBrush  = new SolidColorBrush(Color.FromRgb(0x0A, 0x30, 0x70));
+
+            var canvas = new Canvas { Width = 14, Height = 11,
+                                      VerticalAlignment = VerticalAlignment.Center };
+
+            if (driveType == DriveType.CDRom)
+            {
+                // CD: circle with hole
+                var outer = new Ellipse
+                {
+                    Width = 11, Height = 11,
+                    Fill   = Brushes.Silver,
+                    Stroke = new SolidColorBrush(Color.FromRgb(0x60, 0x60, 0x60)),
+                    StrokeThickness = 0.8
+                };
+                Canvas.SetLeft(outer, 1); Canvas.SetTop(outer, 0);
+
+                var highlight = new Ellipse
+                {
+                    Width = 6, Height = 3,
+                    Fill = new SolidColorBrush(Color.FromArgb(120, 255, 255, 255))
+                };
+                Canvas.SetLeft(highlight, 3); Canvas.SetTop(highlight, 1);
+
+                var hole = new Ellipse
+                {
+                    Width = 3, Height = 3,
+                    Fill = new SolidColorBrush(Color.FromRgb(0xE8, 0xEC, 0xEF))
+                };
+                Canvas.SetLeft(hole, 4); Canvas.SetTop(hole, 4);
+
+                canvas.Children.Add(outer);
+                canvas.Children.Add(highlight);
+                canvas.Children.Add(hole);
+            }
+            else
+            {
+                // HDD body – main rectangle
+                var body = new Rectangle
+                {
+                    Width = 14, Height = 9,
+                    Fill   = bodyBrush,
+                    RadiusX = 1.5, RadiusY = 1.5
+                };
+                Canvas.SetLeft(body, 0); Canvas.SetTop(body, 2);
+
+                // Top cap (narrower, slightly lighter)
+                var cap = new Rectangle
+                {
+                    Width = 10, Height = 2,
+                    Fill   = lightBrush,
+                    RadiusX = 1, RadiusY = 1
+                };
+                Canvas.SetLeft(cap, 2); Canvas.SetTop(cap, 0);
+
+                // Platter circle
+                var platter = new Ellipse
+                {
+                    Width = 5, Height = 5,
+                    Fill   = lightBrush,
+                    Stroke = darkBrush, StrokeThickness = 0.6
+                };
+                Canvas.SetLeft(platter, 1); Canvas.SetTop(platter, 3);
+
+                // Access arm line
+                var arm = new Line
+                {
+                    X1 = 7, Y1 = 5.5, X2 = 13, Y2 = 4,
+                    Stroke = darkBrush, StrokeThickness = 0.8
+                };
+
+                // Highlight stripe (top)
+                var shine = new Rectangle
+                {
+                    Width = 14, Height = 2,
+                    Fill  = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)),
+                    RadiusX = 1.5, RadiusY = 0
+                };
+                Canvas.SetLeft(shine, 0); Canvas.SetTop(shine, 2);
+
+                canvas.Children.Add(body);
+                canvas.Children.Add(cap);
+                canvas.Children.Add(platter);
+                canvas.Children.Add(arm);
+                canvas.Children.Add(shine);
+            }
+            return canvas;
+        }
+
         private void PopulateDriveBar()
         {
             DriveBarPanel.Children.Clear();
+
+            var hoverBg      = TryFindResource("DriveButtonHoverBrush") as Brush
+                               ?? new SolidColorBrush(Color.FromRgb(0xC7, 0xE3, 0xF7));
+            var activeBorder = TryFindResource("ActivePanelBorderBrush") as Brush
+                               ?? new SolidColorBrush(Color.FromRgb(0x00, 0x7A, 0xCC));
+            var normalFg     = TryFindResource("PrimaryTextBrush")      as Brush ?? Brushes.Black;
+
+            string? currentRoot = null;
+            if (DataContext is FilePanelViewModel vm0)
+                currentRoot = System.IO.Path.GetPathRoot(vm0.CurrentPath);
+
+            bool first = true;
             foreach (var drive in System.IO.DriveInfo.GetDrives())
             {
                 if (!drive.IsReady) continue;
-                var btn = new Button
+
+                var root   = drive.RootDirectory.FullName;
+                var letter = drive.Name.TrimEnd('\\').ToUpper(); // e.g. "C:"
+
+                bool isActive = string.Equals(root, currentRoot,
+                                              StringComparison.OrdinalIgnoreCase);
+
+                // ── Separator between drives ──────────────────────────────
+                if (!first)
                 {
-                    Content         = drive.Name.Replace("\\", "").ToUpper(),
-                    Padding         = new Thickness(5, 1, 5, 1),
-                    Margin          = new Thickness(1, 2, 1, 2),
-                    FontSize        = 10,
-                    Background      = TryFindResource("DriveButtonBrush") as Brush,
-                    BorderBrush     = TryFindResource("DriveButtonBorderBrush") as Brush,
-                    BorderThickness = new Thickness(1),
-                    Cursor          = Cursors.Hand,
-                    Tag             = drive.RootDirectory.FullName,
-                    // Show free space in tooltip
-                    ToolTip         = FilePanelViewModel.GetDriveTooltip(drive.RootDirectory.FullName)
+                    DriveBarPanel.Children.Add(new TextBlock
+                    {
+                        Text              = "—",
+                        FontSize          = 9,
+                        Foreground        = new SolidColorBrush(Color.FromRgb(0xA0, 0xA8, 0xB0)),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin            = new Thickness(0)
+                    });
+                }
+                first = false;
+
+                // ── Drive icon (vector) ──────────────────────────────────
+                var icon = MakeDriveIcon(drive.DriveType);
+
+                // ── Drive letter ─────────────────────────────────────────
+                var letterTb = new TextBlock
+                {
+                    Text              = letter,
+                    FontSize          = 10,
+                    FontWeight        = FontWeights.SemiBold,
+                    Foreground        = normalFg,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin            = new Thickness(2, 0, 0, 0)
                 };
-                btn.Click += (s, _) =>
+
+                var content = new StackPanel { Orientation = Orientation.Horizontal };
+                content.Children.Add(icon);
+                content.Children.Add(letterTb);
+
+                // ── Button border ─────────────────────────────────────────
+                var btn = new Border
+                {
+                    Background      = Brushes.Transparent,
+                    BorderBrush     = isActive ? activeBorder : Brushes.Transparent,
+                    BorderThickness = new Thickness(1),
+                    CornerRadius    = new CornerRadius(2),
+                    Padding         = new Thickness(3, 1, 3, 1),
+                    Margin          = new Thickness(0, 2, 0, 2),
+                    Cursor          = Cursors.Hand,
+                    Tag             = root,
+                    ToolTip         = FilePanelViewModel.GetDriveTooltip(root),
+                    Child           = content
+                };
+
+                btn.MouseEnter += (_, _) => btn.Background = hoverBg;
+                btn.MouseLeave += (_, _) => btn.Background = Brushes.Transparent;
+                btn.MouseLeftButtonDown += (_, _) =>
                 {
                     if (DataContext is FilePanelViewModel vm && btn.Tag is string path)
                         vm.NavigateTo(path);
                 };
+
                 DriveBarPanel.Children.Add(btn);
+            }
+        }
+
+        /// <summary>
+        /// Refreshes the active-drive highlight border after navigation.
+        /// Call this whenever CurrentPath changes.
+        /// </summary>
+        private void RefreshDriveBarHighlight()
+        {
+            if (DataContext is not FilePanelViewModel vm) return;
+            string? currentRoot = System.IO.Path.GetPathRoot(vm.CurrentPath);
+
+            var activeBorder = TryFindResource("ActivePanelBorderBrush") as Brush
+                               ?? Brushes.DodgerBlue;
+
+            foreach (var child in DriveBarPanel.Children)
+            {
+                if (child is not Border btn) continue;
+                if (btn.Tag is not string root) continue;
+                bool isActive = string.Equals(root, currentRoot,
+                                              StringComparison.OrdinalIgnoreCase);
+                btn.BorderBrush = isActive ? activeBorder : Brushes.Transparent;
             }
         }
 
@@ -134,6 +324,10 @@ namespace SwiftPanel.Controls
         {
             BreadcrumbPanel.Children.Clear();
             if (DataContext is not FilePanelViewModel vm) return;
+
+            var normalFg   = TryFindResource("BreadcrumbForegroundBrush")  as Brush ?? Brushes.DimGray;
+            var lastFg     = TryFindResource("BreadcrumbLastSegmentBrush") as Brush ?? Brushes.Navy;
+            var separatorFg= TryFindResource("BreadcrumbSeparatorBrush")   as Brush ?? Brushes.Gray;
 
             var parts = vm.BreadcrumbParts;
             for (int i = 0; i < parts.Length; i++)
@@ -146,9 +340,7 @@ namespace SwiftPanel.Controls
                     Content     = part.Label,
                     Style       = TryFindResource("BreadcrumbButtonStyle") as Style,
                     FontWeight  = isLast ? FontWeights.SemiBold : FontWeights.Normal,
-                    Foreground  = isLast
-                        ? new SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 0, 128))
-                        : Brushes.Black,
+                    Foreground  = isLast ? lastFg : normalFg,
                     Tag         = part.FullPath,
                     ToolTip     = part.FullPath
                 };
@@ -164,10 +356,10 @@ namespace SwiftPanel.Controls
                     BreadcrumbPanel.Children.Add(new TextBlock
                     {
                         Text              = "›",
-                        FontSize          = 10,
+                        FontSize          = 11,
                         VerticalAlignment = VerticalAlignment.Center,
                         Margin            = new Thickness(0),
-                        Foreground        = Brushes.Gray
+                        Foreground        = separatorFg
                     });
                 }
             }
@@ -181,6 +373,8 @@ namespace SwiftPanel.Controls
         // ─────────────────────────────────────────────────────────────────
         private async void SwitchViewMode(ViewMode mode)
         {
+            _currentViewMode = mode;  // track for SizeChanged handler
+
             // ── Switch ItemTemplate ──
             var templateKey = mode switch
             {
@@ -204,13 +398,13 @@ namespace SwiftPanel.Controls
             VirtualizingPanel.SetIsVirtualizing(FileListView, mode == ViewMode.Details);
 
             // ── ScrollViewer direction per mode ──
-            //   List      → WrapPanel Vertical  → items fill height then wrap RIGHT → scroll Horizontal
-            //   Icons     → WrapPanel Horizontal → items fill width then wrap DOWN  → scroll Vertical
-            //   Details   → Stack Vertical                                          → scroll Vertical
-            ScrollViewer.SetHorizontalScrollBarVisibility(FileListView,
-                mode == ViewMode.List ? ScrollBarVisibility.Auto : ScrollBarVisibility.Auto);
-            ScrollViewer.SetVerticalScrollBarVisibility(FileListView,
-                mode == ViewMode.List ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto);
+            //   Details   → VirtualizingStack (vertical)     → V-scroll only
+            //   List      → WrapPanel(Vertical) multi-column  → H-scroll only (height-bounded)
+            //   Icons     → WrapPanel(Horizontal) grid        → V-scroll only, NO H-scroll so items wrap
+            var hScroll = mode == ViewMode.List ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled;
+            var vScroll = mode == ViewMode.List ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
+            ScrollViewer.SetHorizontalScrollBarVisibility(FileListView, hScroll);
+            ScrollViewer.SetVerticalScrollBarVisibility(FileListView, vScroll);
 
             // ── Column headers: visible only in Details mode ──
             ColumnHeadersGrid.Visibility = mode == ViewMode.Details
@@ -225,9 +419,19 @@ namespace SwiftPanel.Controls
             if (mode == ViewMode.List)
             {
                 FileListView.SizeChanged += OnListViewSizeChanged;
-                // Also apply immediately after next layout pass
 #pragma warning disable CS4014
                 Dispatcher.BeginInvoke(UpdateListPanelHeight,
+                    System.Windows.Threading.DispatcherPriority.Loaded);
+#pragma warning restore CS4014
+            }
+
+            // ── Icons/Thumbnails mode: WrapPanel(Horizontal) needs MaxWidth = ListView width
+            //    so it wraps items into rows (grid) instead of a single horizontal line.
+            //    The SizeChanged handler keeps it in sync when the panel is resized. ──
+            if (mode is ViewMode.LargeIcons or ViewMode.Thumbnails)
+            {
+#pragma warning disable CS4014
+                Dispatcher.BeginInvoke(UpdateIconsPanelWidth,
                     System.Windows.Threading.DispatcherPriority.Loaded);
 #pragma warning restore CS4014
             }
@@ -241,7 +445,18 @@ namespace SwiftPanel.Controls
             }
         }
 
-        // ── List-mode helpers ──────────────────────────────────────────────
+        // ── List-mode helpers ─────────────────────────────────────────────────────────
+
+        // Tracks current view mode for size-change handler
+        private ViewMode _currentViewMode = ViewMode.Details;
+
+        private void OnFileListSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (_currentViewMode is ViewMode.LargeIcons or ViewMode.Thumbnails)
+                UpdateIconsPanelWidth();
+            else if (_currentViewMode == ViewMode.List)
+                UpdateListPanelHeight();
+        }
 
         private void OnListViewSizeChanged(object sender, SizeChangedEventArgs e)
             => UpdateListPanelHeight();
@@ -256,6 +471,23 @@ namespace SwiftPanel.Controls
             {
                 // Give WrapPanel the available height so it wraps into columns
                 panel.Height = FileListView.ActualHeight - 4;
+            }
+        }
+
+        /// <summary>
+        /// Constrains the WrapPanel(Horizontal) max-width to the ListView's current width
+        /// so icons/thumbnails wrap into grid rows instead of a single horizontal line.
+        /// </summary>
+        private void UpdateIconsPanelWidth()
+        {
+            if (FileListView.ActualWidth <= 0) return;
+
+            var panel = FindVisualChild<WrapPanel>(FileListView);
+            if (panel != null)
+            {
+                // Remove 4px for scrollbar gutter and border
+                panel.MaxWidth = FileListView.ActualWidth - 4;
+                panel.Width    = double.NaN; // auto
             }
         }
 
@@ -323,6 +555,12 @@ namespace SwiftPanel.Controls
             TabBarPanel.Children.Clear();
             if (DataContext is not FilePanelViewModel vm) return;
 
+            var tabActiveBrush   = TryFindResource("TabActiveBrush")   as Brush ?? Brushes.White;
+            var tabInactiveBrush = TryFindResource("TabInactiveBrush") as Brush ?? Brushes.LightGray;
+            var tabHoverBrush    = TryFindResource("TabHoverBrush")    as Brush ?? Brushes.AliceBlue;
+            var tabBorderBrush   = TryFindResource("TabBorderBrush")   as Brush ?? Brushes.Gray;
+            var closeHoverBrush  = TryFindResource("TabCloseHoverBrush") as Brush ?? Brushes.Red;
+
             for (int i = 0; i < vm.Tabs.Count; i++)
             {
                 var tab = vm.Tabs[i];
@@ -340,19 +578,37 @@ namespace SwiftPanel.Controls
                     FontWeight        = isActive ? FontWeights.SemiBold : FontWeights.Normal
                 };
 
-                var closeBtn = new Button
+                // Close button with hover highlight
+                var closeBtn = new Border
                 {
-                    Content         = "×",
+                    Width           = 16,
+                    Height          = 16,
+                    CornerRadius    = new CornerRadius(3),
                     Background      = Brushes.Transparent,
-                    BorderThickness = new Thickness(0),
-                    FontSize        = 11,
-                    Padding         = new Thickness(2, 0, 2, 0),
-                    VerticalAlignment = VerticalAlignment.Center,
                     Cursor          = Cursors.Hand,
+                    VerticalAlignment = VerticalAlignment.Center,
                     Visibility      = vm.Tabs.Count > 1 ? Visibility.Visible : Visibility.Collapsed,
-                    ToolTip         = "Close tab  (Ctrl+W)"
+                    ToolTip         = "Close tab  (Ctrl+W)",
+                    Child           = new TextBlock
+                    {
+                        Text                = "×",
+                        FontSize            = 12,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment   = VerticalAlignment.Center,
+                        Foreground          = isActive ? Brushes.DimGray : Brushes.Gray
+                    }
                 };
-                closeBtn.Click += (_, ev) =>
+                closeBtn.MouseEnter += (_, _) =>
+                {
+                    closeBtn.Background = closeHoverBrush;
+                    ((TextBlock)closeBtn.Child).Foreground = Brushes.White;
+                };
+                closeBtn.MouseLeave += (_, _) =>
+                {
+                    closeBtn.Background = Brushes.Transparent;
+                    ((TextBlock)closeBtn.Child).Foreground = isActive ? Brushes.DimGray : Brushes.Gray;
+                };
+                closeBtn.MouseLeftButtonDown += (_, ev) =>
                 {
                     ev.Handled = true;
                     vm.CloseTabCommand.Execute(capturedIdx);
@@ -362,18 +618,26 @@ namespace SwiftPanel.Controls
                 sp.Children.Add(header);
                 sp.Children.Add(closeBtn);
 
+                var currentBg = isActive ? tabActiveBrush : tabInactiveBrush;
                 var tabBorder = new Border
                 {
-                    Background = isActive
-                        ? TryFindResource("TabActiveBrush") as Brush ?? Brushes.White
-                        : TryFindResource("TabInactiveBrush") as Brush ?? Brushes.LightGray,
-                    BorderBrush     = TryFindResource("TabBorderBrush") as Brush ?? Brushes.Gray,
+                    Background      = currentBg,
+                    BorderBrush     = tabBorderBrush,
                     BorderThickness = new Thickness(1, 0, 1, isActive ? 0 : 1),
-                    Padding         = new Thickness(7, 2, 4, 2),
+                    Padding         = new Thickness(8, 3, 5, 3),
+                    CornerRadius    = new CornerRadius(3, 3, 0, 0),
                     Cursor          = Cursors.Hand,
                     Child           = sp,
                     ToolTip         = tab.Path
                 };
+
+                // Hover effect for inactive tabs
+                if (!isActive)
+                {
+                    tabBorder.MouseEnter += (_, _) => tabBorder.Background = tabHoverBrush;
+                    tabBorder.MouseLeave += (_, _) => tabBorder.Background = tabInactiveBrush;
+                }
+
                 tabBorder.MouseLeftButtonDown += (_, _) =>
                     vm.SwitchTabCommand.Execute(capturedIdx);
 
@@ -381,22 +645,29 @@ namespace SwiftPanel.Controls
             }
 
             // "+" new tab button
-            var addBtn = new Button
+            var addBorder = new Border
             {
-                Content         = "+",
                 Background      = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
-                FontSize        = 14,
-                Padding         = new Thickness(5, 0, 5, 0),
-                VerticalAlignment = VerticalAlignment.Stretch,
+                Padding         = new Thickness(6, 3, 6, 3),
                 Cursor          = Cursors.Hand,
-                ToolTip         = "New Tab (Ctrl+T)"
+                VerticalAlignment = VerticalAlignment.Stretch,
+                ToolTip         = "New Tab  (Ctrl+T)",
+                Child           = new TextBlock
+                {
+                    Text                = "+",
+                    FontSize            = 15,
+                    Foreground          = Brushes.DimGray,
+                    VerticalAlignment   = VerticalAlignment.Center
+                }
             };
-            addBtn.Click += (_, _) =>
+            addBorder.MouseEnter += (_, _) => addBorder.Background = tabHoverBrush;
+            addBorder.MouseLeave += (_, _) => addBorder.Background = Brushes.Transparent;
+            addBorder.MouseLeftButtonDown += (_, _) =>
             {
                 if (DataContext is FilePanelViewModel v) v.AddTabCommand.Execute(null);
             };
-            TabBarPanel.Children.Add(addBtn);
+            TabBarPanel.Children.Add(addBorder);
         }
 
         // ─────────────────────────────────────────────────────────────────

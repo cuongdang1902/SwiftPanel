@@ -35,41 +35,62 @@
             <!-- Toolbar buttons -->
             <Border Grid.Row="0" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,0,1">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0">
-                    <!-- Navigation history -->
-                    <Button Content="◀" FontSize="10" Padding="5,2" Margin="1,2"
+                    <!-- Navigation history: circular arrow icons -->
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Padding="2" Margin="1,2"
                             ToolTip="Back (Alt+←)"
-                            Command="{Binding ActivePanel.NavigateBackCommand}"/>
-                    <Button Content="►" FontSize="10" Padding="5,2" Margin="1,2"
+                            Command="{Binding ActivePanel.NavigateBackCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <Viewbox Width="24" Height="24" Margin="0,0,4,0">
+                                <!-- Blue left arrow -->
+                                <Path Fill="#5B9DC8"
+                                      Data="M 17,9 L 9,15 L 17,21 L 17,18 L 23,18 L 23,12 L 17,12 Z"/>
+                            </Viewbox>
+                            <TextBlock Text="Back" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Padding="2" Margin="1,2"
                             ToolTip="Forward (Alt+→)"
-                            Command="{Binding ActivePanel.NavigateForwardCommand}"/>
-                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
-                    <Button Content="📁 New Folder" Command="{Binding NewFolderCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="New Folder (F7)"/>
-                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
-                    <Button Content="📋 Copy" Command="{Binding CopyCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Copy (F5)"/>
-                    <Button Content="✂️ Move" Command="{Binding MoveCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Move (F6)"/>
-                    <Button Content="🗑️ Delete" Command="{Binding DeleteCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Delete (F8)"/>
-                    <Button Content="✏️ Rename" Command="{Binding RenameCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Rename (F2)"/>
-                    <Button Content="🔤 Multi-Rename" Command="{Binding MultiRenameCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Multi-Rename (Ctrl+M)"/>
-                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
-                    <Button Content="🔍 Find" Command="{Binding FindCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Find (Ctrl+F)"/>
-                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
-                    <Button Content="☑ Mark All" Command="{Binding MarkAllCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Mark All (Num+)"/>
-                    <Button Content="☐ Unmark" Command="{Binding UnmarkAllCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Unmark All (Num-)"/>
-                    <Button Content="⇄ Invert" Command="{Binding InvertMarksCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Invert Marks (Num*)"/>
-                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
+                            Command="{Binding ActivePanel.NavigateForwardCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <Viewbox Width="24" Height="24" Margin="0,0,4,0">
+                                <!-- Blue right arrow -->
+                                <Path Fill="#5B9DC8"
+                                      Data="M 15,9 L 23,15 L 15,21 L 15,18 L 9,18 L 9,12 L 15,12 Z"/>
+                            </Viewbox>
+                            <TextBlock Text="Forward" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Separator Margin="3,4"/>
+                    <Button Content="📁 New Folder" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding NewFolderCommand}" ToolTip="New Folder (F7)"/>
+                    <Separator Margin="3,4"/>
+                    <Button Content="📋 Copy" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding CopyCommand}" ToolTip="Copy (F5)"/>
+                    <Button Content="✂️ Move" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding MoveCommand}" ToolTip="Move (F6)"/>
+                    <Button Content="🗑️ Delete" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding DeleteCommand}" ToolTip="Delete (F8)"/>
+                    <Button Content="✏️ Rename" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding RenameCommand}" ToolTip="Rename (F2)"/>
+                    <Button Content="🔤 Multi-Rename" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding MultiRenameCommand}" ToolTip="Multi-Rename (Ctrl+M)"/>
+                    <Separator Margin="3,4"/>
+                    <Button Content="🔍 Find" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding FindCommand}" ToolTip="Find (Alt+F7)"/>
+                    <Separator Margin="3,4"/>
+                    <Button Content="☑ Mark All" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding MarkAllCommand}" ToolTip="Mark All (Num+)"/>
+                    <Button Content="☐ Unmark" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding UnmarkAllCommand}" ToolTip="Unmark All (Num-)"/>
+                    <Button Content="⇄ Invert" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding InvertMarksCommand}" ToolTip="Invert Marks (Num*)"/>
+                    <Separator Margin="3,4"/>
                     <!-- Bookmarks button + popup -->
                     <Button x:Name="BookmarksBtn" Content="★ Bookmarks"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Bookmarks (Ctrl+D to add)"
+                            Style="{StaticResource ToolbarButtonStyle}"
+                            ToolTip="Bookmarks (Ctrl+D to add)"
                             Click="OnBookmarksBtnClick">
                         <Button.ContextMenu>
                             <ContextMenu x:Name="BookmarksMenu" StaysOpen="False">
@@ -82,12 +103,16 @@
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
-                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="2,4"/>
-                    <Button Content="⬛ Terminal" Command="{Binding OpenTerminalCommand}"
-                            Padding="6,2" Margin="1,2" FontSize="10" ToolTip="Open Terminal (Ctrl+T)"/>
+                    <Separator Margin="3,4"/>
+                    <Button Content="▓ Terminal" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding OpenTerminalCommand}" ToolTip="Open Terminal (Ctrl+T)"/>
+                    <Separator Margin="3,4"/>
+                    <Button Content="👁️ Viewer" Style="{StaticResource ToolbarButtonStyle}"
+                            Command="{Binding ToggleViewerCommand}" ToolTip="Quick Viewer (F3)"/>
                 </StackPanel>
             </Border>
         </Grid>
+
 
         <!-- ===== MAIN CONTENT: Two Panels + Splitter + Viewer ===== -->
         <Grid Grid.Row="1">
@@ -139,7 +164,7 @@
         </Grid>
 
         <!-- ===== STATUS BAR (2 rows: file info + disk usage) ===== -->
-        <Border Grid.Row="2" Background="{StaticResource StatusBarBackgroundBrush}"
+        <Border Grid.Row="2" Background="{StaticResource ToolbarBackgroundBrush}"
                 BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,1,0,0">
             <Grid Margin="4,1">
                 <Grid.ColumnDefinitions>
@@ -155,6 +180,7 @@
                 <!-- Left: file count status -->
                 <TextBlock Grid.Column="0" Grid.Row="0" Text="{Binding LeftPanel.StatusText}"
                            VerticalAlignment="Center" FontSize="10"
+                           Foreground="{StaticResource PrimaryTextBrush}"
                            TextTrimming="CharacterEllipsis"/>
 
                 <!-- Left: disk usage bar -->
@@ -165,26 +191,36 @@
                     </Grid.ColumnDefinitions>
                     <ProgressBar Grid.Column="0" Value="{Binding LeftPanel.DriveUsedPercent, Mode=OneWay}"
                                  Maximum="100" Height="6" VerticalAlignment="Center"
-                                 Foreground="#4CAF50" Background="#D0D0D0" BorderThickness="0">
+                                 Background="#D0D0D0" BorderThickness="0">
                         <ProgressBar.Style>
                             <Style TargetType="ProgressBar">
                                 <Setter Property="Foreground" Value="#4CAF50"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding LeftPanel.DriveUsedPercent, Converter={StaticResource BoolToVisibilityConverter}}" Value="Visible">
-                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                    <!-- Blue when >75% used (changed from orange) -->
+                                    <DataTrigger Binding="{Binding LeftPanel.DriveUsedPercent,
+                                        Converter={StaticResource ThresholdToBoolConverter},
+                                        ConverterParameter=75}" Value="True">
+                                        <Setter Property="Foreground" Value="#5B9DC8"/>
+                                    </DataTrigger>
+                                    <!-- Red when >90% used -->
+                                    <DataTrigger Binding="{Binding LeftPanel.DriveUsedPercent,
+                                        Converter={StaticResource ThresholdToBoolConverter},
+                                        ConverterParameter=90}" Value="True">
+                                        <Setter Property="Foreground" Value="#E53935"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </ProgressBar.Style>
                     </ProgressBar>
                     <TextBlock Grid.Column="1" Text="{Binding LeftPanel.DriveSpaceText}"
-                               FontSize="9" Foreground="Gray" Margin="4,0,0,0"
-                               VerticalAlignment="Center"/>
+                               FontSize="9" Foreground="{StaticResource SecondaryTextBrush}"
+                               Margin="4,0,0,0" VerticalAlignment="Center"/>
                 </Grid>
 
                 <!-- Right: file count status -->
                 <TextBlock Grid.Column="2" Grid.Row="0" Text="{Binding RightPanel.StatusText}"
                            VerticalAlignment="Center" FontSize="10"
+                           Foreground="{StaticResource PrimaryTextBrush}"
                            TextTrimming="CharacterEllipsis"/>
 
                 <!-- Right: disk usage bar -->
@@ -195,10 +231,28 @@
                     </Grid.ColumnDefinitions>
                     <ProgressBar Grid.Column="0" Value="{Binding RightPanel.DriveUsedPercent, Mode=OneWay}"
                                  Maximum="100" Height="6" VerticalAlignment="Center"
-                                 Foreground="#4CAF50" Background="#D0D0D0" BorderThickness="0"/>
+                                 Background="#D0D0D0" BorderThickness="0">
+                        <ProgressBar.Style>
+                            <Style TargetType="ProgressBar">
+                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding RightPanel.DriveUsedPercent,
+                                        Converter={StaticResource ThresholdToBoolConverter},
+                                        ConverterParameter=75}" Value="True">
+                                        <Setter Property="Foreground" Value="#5B9DC8"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding RightPanel.DriveUsedPercent,
+                                        Converter={StaticResource ThresholdToBoolConverter},
+                                        ConverterParameter=90}" Value="True">
+                                        <Setter Property="Foreground" Value="#E53935"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ProgressBar.Style>
+                    </ProgressBar>
                     <TextBlock Grid.Column="1" Text="{Binding RightPanel.DriveSpaceText}"
-                               FontSize="9" Foreground="Gray" Margin="4,0,0,0"
-                               VerticalAlignment="Center"/>
+                               FontSize="9" Foreground="{StaticResource SecondaryTextBrush}"
+                               Margin="4,0,0,0" VerticalAlignment="Center"/>
                 </Grid>
             </Grid>
         </Border>

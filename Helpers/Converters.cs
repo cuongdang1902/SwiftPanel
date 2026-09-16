@@ -78,4 +78,21 @@ namespace SwiftPanel.Helpers
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
+
+    /// <summary>
+    /// Returns true when a numeric value exceeds the threshold given in ConverterParameter.
+    /// Used for disk usage ProgressBar color changes (e.g., >75 → orange, >90 → red).
+    /// </summary>
+    public class ThresholdToBoolConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double d && parameter is string s && double.TryParse(s, out double threshold))
+                return d >= threshold;
+            return false;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
 }

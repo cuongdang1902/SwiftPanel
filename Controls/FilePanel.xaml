@@ -15,9 +15,10 @@
             <VirtualizingStackPanel/>
         </ItemsPanelTemplate>
 
-        <!-- LargeIcons / Thumbnails: horizontal wrap -->
+        <!-- LargeIcons / Thumbnails: horizontal wrap → grid layout -->
+        <!-- NOTE: MaxWidth is set in code-behind to ListView.ActualWidth so it wraps properly -->
         <ItemsPanelTemplate x:Key="IconsPanelTemplate">
-            <WrapPanel Orientation="Horizontal" IsItemsHost="True"/>
+            <WrapPanel x:Name="IconsWrapPanel" Orientation="Horizontal" IsItemsHost="True"/>
         </ItemsPanelTemplate>
 
         <!-- List view: vertical wrap (multi-column list) -->
@@ -191,8 +192,8 @@
             </Grid.RowDefinitions>
 
             <!-- ===== DRIVE BAR + VIEW SWITCHER ===== -->
-            <Border Grid.Row="0" Background="#D4D0C8"
-                    BorderBrush="#808080" BorderThickness="0,0,0,1">
+            <Border Grid.Row="0" Background="{StaticResource DriveBarBackgroundBrush}"
+                    BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel>
                     <!-- View mode toggle buttons (right-docked) -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
@@ -221,8 +222,8 @@
             </Border>
 
             <!-- ===== BREADCRUMB PATH BAR ===== -->
-            <Border Grid.Row="1" Background="#F0EEE8"
-                    BorderBrush="#A8A8A0" BorderThickness="1,0,1,1"
+            <Border Grid.Row="1" Background="{StaticResource PathBarBackgroundBrush}"
+                    BorderBrush="{StaticResource PathBarBorderBrush}" BorderThickness="1,0,1,1"
                     Margin="0,0,0,1">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden"
                               x:Name="BreadcrumbScrollViewer">
@@ -232,7 +233,7 @@
             </Border>
 
             <!-- ===== COLUMN HEADERS (Details only) ===== -->
-            <Grid Grid.Row="2" Background="#C8C4BC" x:Name="ColumnHeadersGrid">
+            <Grid Grid.Row="2" Background="{StaticResource ColumnHeaderBackgroundBrush}" x:Name="ColumnHeadersGrid">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="16"/>
                     <ColumnDefinition Width="*"/>
@@ -242,48 +243,53 @@
                     <ColumnDefinition Width="40"/>
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" BorderBrush="#808080" BorderThickness="0,0,1,1"/>
+                <Border Grid.Column="0" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,1,1"/>
 
-                <Border Grid.Column="1" BorderBrush="#808080" BorderThickness="0,0,1,1">
+                <Border Grid.Column="1" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,1,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Name" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold">
+                        <TextBlock FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Name"/><Run Text="{Binding NameSortArrow, Mode=OneWay}"/>
                         </TextBlock>
                     </Button>
                 </Border>
 
-                <Border Grid.Column="2" BorderBrush="#808080" BorderThickness="0,0,1,1">
+                <Border Grid.Column="2" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,1,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Extension" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold">
+                        <TextBlock FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Ext"/><Run Text="{Binding ExtSortArrow, Mode=OneWay}"/>
                         </TextBlock>
                     </Button>
                 </Border>
 
-                <Border Grid.Column="3" BorderBrush="#808080" BorderThickness="0,0,1,1">
+                <Border Grid.Column="3" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,1,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Size" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold" TextAlignment="Right">
+                        <TextBlock FontSize="10" FontWeight="Bold" TextAlignment="Right"
+                                   Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Size"/><Run Text="{Binding SizeSortArrow, Mode=OneWay}"/>
                         </TextBlock>
                     </Button>
                 </Border>
 
-                <Border Grid.Column="4" BorderBrush="#808080" BorderThickness="0,0,1,1">
+                <Border Grid.Column="4" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,1,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Date" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold">
+                        <TextBlock FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Date"/><Run Text="{Binding DateSortArrow, Mode=OneWay}"/>
                         </TextBlock>
                     </Button>
                 </Border>
 
-                <Border Grid.Column="5" BorderBrush="#808080" BorderThickness="0,0,0,1">
+                <Border Grid.Column="5" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,0,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Attributes" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold">
+                        <TextBlock FontSize="10" FontWeight="Bold"
+                                   Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Attr"/><Run Text="{Binding AttributesSortArrow, Mode=OneWay}"/>
                         </TextBlock>
                     </Button>
@@ -291,8 +297,8 @@
             </Grid>
 
             <!-- ===== QUICK FILTER BAR ===== -->
-            <Border Grid.Row="3" Background="#FFFDE8"
-                    BorderBrush="#C8A800" BorderThickness="0,0,0,1"
+            <Border Grid.Row="3" Background="{StaticResource FilterBarBackgroundBrush}"
+                    BorderBrush="{StaticResource FilterBarBorderBrush}" BorderThickness="0,0,0,1"
                     Visibility="{Binding IsFilterVisible, Converter={StaticResource BoolToVisibilityConverter}}"
                     Padding="2,1">
                 <Grid>
@@ -302,11 +308,13 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="🔍 Filter: " FontSize="10"
-                               VerticalAlignment="Center" Margin="2,0,4,0" Foreground="#806000"/>
+                               VerticalAlignment="Center" Margin="2,0,4,0"
+                               Foreground="{StaticResource FilterBarLabelBrush}"/>
                     <TextBox  Grid.Column="1" x:Name="FilterBox"
                               Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
-                              FontSize="10" Padding="2,1" BorderThickness="1" BorderBrush="#C8A800"
-                              Background="#FFFFF0"
+                              FontSize="10" Padding="2,1" BorderThickness="1"
+                              BorderBrush="{StaticResource FilterBarBorderBrush}"
+                              Background="#F8FBFF"
                               GotFocus="OnFilterBoxGotFocus"
                               KeyDown="OnFilterBoxKeyDown"/>
                     <Button Grid.Column="2" Content="✕" FontSize="10"
@@ -322,8 +330,8 @@
                       x:Name="FileListView"
                       ItemsSource="{Binding Items}"
                       SelectedItem="{Binding SelectedItem}"
-                      Background="White"
-                      BorderBrush="#808080"
+                      Background="{StaticResource FileListBackgroundBrush}"
+                      BorderBrush="{StaticResource FileListBorderBrush}"
                       BorderThickness="1,0,1,0"
                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                       VirtualizingPanel.IsVirtualizing="True"
@@ -332,7 +340,8 @@
                       AllowDrop="True"
                       Drop="OnFileDrop"
                       DragEnter="OnDragEnter"
-                      DragLeave="OnDragLeave">
+                      DragLeave="OnDragLeave"
+                      SizeChanged="OnFileListSizeChanged">
 
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
@@ -341,17 +350,33 @@
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                         <Setter Property="FontSize"                   Value="10"/>
                         <Setter Property="VerticalContentAlignment"   Value="Center"/>
+                        <Setter Property="FocusVisualStyle"           Value="{x:Null}"/>
                         <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#316AC5"/>
-                                <Setter Property="Foreground" Value="White"/>
-                            </Trigger>
+                            <!-- Active selection (panel has keyboard focus) -->
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected"           Value="True"/>
+                                    <Condition Property="IsKeyboardFocusWithin" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="Background" Value="{StaticResource SelectionActiveBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource SelectionActiveTextBrush}"/>
+                            </MultiTrigger>
+                            <!-- Inactive selection (panel lost focus) -->
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected"           Value="True"/>
+                                    <Condition Property="IsKeyboardFocusWithin" Value="False"/>
+                                </MultiTrigger.Conditions>
+                                <Setter Property="Background" Value="{StaticResource SelectionInactiveBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource SelectionInactiveTextBrush}"/>
+                            </MultiTrigger>
+                            <!-- Hover (not selected) -->
                             <MultiTrigger>
                                 <MultiTrigger.Conditions>
                                     <Condition Property="IsMouseOver" Value="True"/>
                                     <Condition Property="IsSelected"  Value="False"/>
                                 </MultiTrigger.Conditions>
-                                <Setter Property="Background" Value="#C8DCF8"/>
+                                <Setter Property="Background" Value="{StaticResource ListHoverBrush}"/>
                             </MultiTrigger>
                         </Style.Triggers>
                     </Style>
@@ -395,8 +420,8 @@
             </ListView>
 
             <!-- ===== TAB BAR ===== -->
-            <Border Grid.Row="5" Background="#D4D0C8"
-                    BorderBrush="#808080" BorderThickness="1,1,1,0">
+            <Border Grid.Row="5" Background="{StaticResource TabBarBackgroundBrush}"
+                    BorderBrush="{StaticResource TabBorderBrush}" BorderThickness="1,1,1,0">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <StackPanel Orientation="Horizontal" x:Name="TabBarPanel"/>
                 </ScrollViewer>

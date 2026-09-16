@@ -45,5 +45,5 @@ ehthumbs.db
 *.tmp
 *.temp
 
-# ── Publish ────────────────────────────────────────────────────
 publish/
+ReleaseBuild/

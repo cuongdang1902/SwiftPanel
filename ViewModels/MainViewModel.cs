@@ -19,6 +19,12 @@ namespace SwiftPanel.ViewModels
         [ObservableProperty] private bool _isLeftActive = true;
         [ObservableProperty] private bool _isRightActive = false;
 
+        partial void OnIsLeftActiveChanged(bool value)
+        {
+            OnPropertyChanged(nameof(ActivePanel));
+            OnPropertyChanged(nameof(InactivePanel));
+        }
+
         public FilePanelViewModel LeftPanel  { get; }
         public FilePanelViewModel RightPanel { get; }
 
