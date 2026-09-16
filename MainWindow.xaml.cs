@@ -210,6 +210,7 @@ namespace SwiftPanel
                     break;
 
                 case Key.F8:
+                case Key.Delete:
                     vm.DeleteCommand.Execute(null);
                     e.Handled = true;
                     break;

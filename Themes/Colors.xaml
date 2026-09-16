@@ -187,12 +187,26 @@
         <Setter Property="Background"      Value="#F6F6F6"/>
         <Setter Property="BorderBrush"     Value="#CCCEDB"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="Padding"         Value="1"/>
-        <Setter Property="FontSize"        Value="10"/>
+        <Setter Property="Padding"         Value="2"/>
+        <Setter Property="FontSize"        Value="12"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}">
+                        <ScrollViewer>
+                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                        </ScrollViewer>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style TargetType="MenuItem">
-        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding"  Value="4,4"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -203,20 +217,16 @@
                             SnapsToDevicePixels="True">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="20" SharedSizeGroup="Icon"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
                                 <ColumnDefinition Width="12"/>
                             </Grid.ColumnDefinitions>
-                            <ContentPresenter Grid.Column="0" ContentSource="Icon"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              Width="16" Height="16"/>
-                            <ContentPresenter Grid.Column="1" ContentSource="Header"
+                            <ContentPresenter Grid.Column="0" ContentSource="Header"
                                               RecognizesAccessKey="True"
                                               Margin="4,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}"
+                            <TextBlock Grid.Column="1" Text="{TemplateBinding InputGestureText}"
                                        Foreground="#888" VerticalAlignment="Center"/>
-                            <Path Grid.Column="3" x:Name="Arrow"
+                            <Path Grid.Column="2" x:Name="Arrow"
                                   Data="M0,0 L4,4 L0,8 Z" Fill="#505050"
                                   HorizontalAlignment="Center" VerticalAlignment="Center"
                                   Visibility="Collapsed"/>
@@ -249,17 +259,20 @@
     </Style>
 
     <!-- Separator -->
-    <Style TargetType="Separator">
+    <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
         <Setter Property="Height"     Value="1"/>
         <Setter Property="Margin"     Value="0,2"/>
         <Setter Property="Background" Value="#CCCEDB"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Separator">
-                    <Rectangle Height="1" Fill="{TemplateBinding Background}" Margin="4,0"/>
+                    <Rectangle Height="1" Fill="{TemplateBinding Background}" Margin="0,0"/>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
+    
+    <!-- Also provide a default implicit style just in case -->
+    <Style TargetType="Separator" BasedOn="{StaticResource {x:Static MenuItem.SeparatorStyleKey}}"/>
 
 </ResourceDictionary>

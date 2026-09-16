@@ -131,7 +131,7 @@
                                 Tag="Left"
                                 DataContext="{Binding LeftPanel}"
                                 IsActive="{Binding IsLeftActive}"
-                                MainViewModel="{Binding}"/>
+                                MainViewModel="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"/>
 
             <!-- SPLITTER -->
             <GridSplitter Grid.Column="1"
@@ -147,7 +147,7 @@
                                 Tag="Right"
                                 DataContext="{Binding RightPanel}"
                                 IsActive="{Binding IsRightActive}"
-                                MainViewModel="{Binding}"/>
+                                MainViewModel="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"/>
 
             <!-- VIEWER SPLITTER (hidden until F3) -->
             <GridSplitter Grid.Column="3" x:Name="ViewerSplitter"

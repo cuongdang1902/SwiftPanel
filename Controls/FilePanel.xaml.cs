@@ -594,6 +594,54 @@ namespace SwiftPanel.Controls
         // ─────────────────────────────────────────────────────────────────
         // Drag & Drop – SOURCE side
         // ─────────────────────────────────────────────────────────────────
+        private System.Windows.Threading.DispatcherTimer? _renameTimer;
+        private FileItem? _renameTarget;
+
+        private void OnListViewItemPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+            {
+                _renameTimer?.Stop();
+                _renameTimer = null;
+                return;
+            }
+
+            if (sender is ListViewItem item && item.DataContext is FileItem fileItem)
+            {
+                // Note the target only if it's already selected and it's the only selection
+                if (item.IsSelected && FileListView.SelectedItems.Count == 1)
+                    _renameTarget = fileItem;
+                else
+                    _renameTarget = null;
+            }
+        }
+
+        private void OnListViewItemPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_renameTarget != null && sender is ListViewItem item && item.DataContext == _renameTarget)
+            {
+                if (_isDragging) 
+                {
+                    _renameTarget = null;
+                    return;
+                }
+
+                _renameTimer?.Stop();
+                _renameTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
+                _renameTimer.Tick += (s, args) =>
+                {
+                    _renameTimer.Stop();
+                    _renameTimer = null;
+                    if (DataContext is FilePanelViewModel vm && vm.SelectedItem == _renameTarget)
+                    {
+                        vm.StartRenameCommand.Execute(_renameTarget);
+                    }
+                    _renameTarget = null;
+                };
+                _renameTimer.Start();
+            }
+        }
+
         private void OnListMouseDown(object sender, MouseButtonEventArgs e)
         {
             _dragStartPoint = e.GetPosition(FileListView);
@@ -849,6 +897,19 @@ namespace SwiftPanel.Controls
         // ─────────────────────────────────────────────────────────────────
         // Context Menu
         // ─────────────────────────────────────────────────────────────────
+        private void OnListViewItemPreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListViewItem item && item.DataContext != null)
+            {
+                if (!item.IsSelected)
+                {
+                    FileListView.SelectedItems.Clear();
+                    item.IsSelected = true;
+                }
+                item.Focus();
+            }
+        }
+
         private void OnContextOpen(object s, RoutedEventArgs e)
         {
             if (DataContext is FilePanelViewModel vm) vm.OpenItemCommand.Execute(vm.SelectedItem);

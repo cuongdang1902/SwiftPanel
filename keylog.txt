@@ -3,3 +3,5 @@
 [14:51:07] Key: F5 (SystemKey: None), Handled: False
 [14:51:18] Key: F5 (SystemKey: None), Handled: False
 [14:51:22] Key: F5 (SystemKey: None), Handled: False
+[16:35:55] Key: Delete (SystemKey: None), Handled: False, Focused: ListViewItem
+[16:38:33] Key: Delete (SystemKey: None), Handled: False, Focused: ListViewItem
