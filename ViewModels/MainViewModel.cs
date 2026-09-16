@@ -38,8 +38,8 @@ namespace SwiftPanel.ViewModels
         public MainViewModel(AppSettings? settings = null)
         {
             var s = settings ?? new AppSettings();
-            LeftPanel  = new FilePanelViewModel(s.LeftPath);
-            RightPanel = new FilePanelViewModel(s.RightPath);
+            LeftPanel  = new FilePanelViewModel(s.LeftTabs, s.LeftActiveTabIndex, s.LeftPath);
+            RightPanel = new FilePanelViewModel(s.RightTabs, s.RightActiveTabIndex, s.RightPath);
             ApplySettings(s);
 
             // Auto-refresh viewer when panel selection changes
@@ -89,6 +89,10 @@ namespace SwiftPanel.ViewModels
             {
                 LeftPath           = LeftPanel.CurrentPath,
                 RightPath          = RightPanel.CurrentPath,
+                LeftTabs           = LeftPanel.Tabs.Select(t => new SavedTab { Header = t.Header, Path = t.Path }).ToList(),
+                LeftActiveTabIndex = LeftPanel.ActiveTabIndex,
+                RightTabs          = RightPanel.Tabs.Select(t => new SavedTab { Header = t.Header, Path = t.Path }).ToList(),
+                RightActiveTabIndex= RightPanel.ActiveTabIndex,
                 LeftViewMode       = LeftPanel.ViewMode,
                 RightViewMode      = RightPanel.ViewMode,
                 LeftSort           = LeftPanel.CurrentSort,

@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using SwiftPanel.Models;
 using SwiftPanel.Helpers;
+using SwiftPanel.Services;
 
 namespace SwiftPanel.ViewModels
 {
@@ -89,21 +90,26 @@ namespace SwiftPanel.ViewModels
         // ─────────────────────────────────────────────────────────────────
         // Constructors
         // ─────────────────────────────────────────────────────────────────
-        public FilePanelViewModel()
+        public FilePanelViewModel(IEnumerable<SavedTab>? savedTabs = null, int activeTabIndex = 0, string? fallbackPath = null)
         {
-            var path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            Tabs.Add(new TabEntry { Header = "Home", Path = path });
-            NavigateTo(path);
-        }
-
-        public FilePanelViewModel(string initialPath)
-        {
-            Tabs.Add(new TabEntry
+            if (savedTabs != null && savedTabs.Any())
             {
-                Header = Path.GetFileName(initialPath).IfEmpty(initialPath),
-                Path = initialPath
-            });
-            NavigateTo(initialPath);
+                foreach (var st in savedTabs)
+                    Tabs.Add(new TabEntry { Header = st.Header, Path = st.Path });
+                
+                ActiveTabIndex = (activeTabIndex >= 0 && activeTabIndex < Tabs.Count) ? activeTabIndex : 0;
+                NavigateTo(Tabs[ActiveTabIndex].Path);
+            }
+            else
+            {
+                var path = fallbackPath ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                Tabs.Add(new TabEntry
+                {
+                    Header = Path.GetFileName(path).IfEmpty(path),
+                    Path = path
+                });
+                NavigateTo(path);
+            }
         }
 
         // ─────────────────────────────────────────────────────────────────

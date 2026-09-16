@@ -7,9 +7,14 @@ namespace SwiftPanel.Services
     /// <summary>All persisted user preferences for SwiftPanel.</summary>
     public class AppSettings
     {
-        // ── Panel paths ───────────────────────────────────────────────────
+        // ── Panel paths & Tabs ────────────────────────────────────────────
         public string LeftPath  { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         public string RightPath { get; set; } = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        public List<SavedTab> LeftTabs { get; set; } = new();
+        public int LeftActiveTabIndex { get; set; } = 0;
+        public List<SavedTab> RightTabs { get; set; } = new();
+        public int RightActiveTabIndex { get; set; } = 0;
 
         // ── View modes ────────────────────────────────────────────────────
         public ViewMode LeftViewMode  { get; set; } = ViewMode.Details;
@@ -39,6 +44,12 @@ namespace SwiftPanel.Services
     public class BookmarkEntry
     {
         public string Name { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+    }
+
+    public class SavedTab
+    {
+        public string Header { get; set; } = string.Empty;
         public string Path { get; set; } = string.Empty;
     }
 }
