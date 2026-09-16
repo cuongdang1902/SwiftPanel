@@ -42,9 +42,9 @@
                             ToolTip="Back (Alt+←)"
                             Command="{Binding ActivePanel.NavigateBackCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <Viewbox Width="24" Height="24" Margin="0,0,4,0">
+                            <Viewbox Width="24" Height="24" Margin="0,-3,4,3" VerticalAlignment="Center">
                                 <!-- Blue left arrow -->
-                                <Path Fill="#5B9DC8"
+                                <Path Fill="{StaticResource SplitterBrush}"
                                       Data="M 17,9 L 9,15 L 17,21 L 17,18 L 23,18 L 23,12 L 17,12 Z"/>
                             </Viewbox>
                             <TextBlock Text="Back" VerticalAlignment="Center"/>
@@ -55,9 +55,9 @@
                             ToolTip="Forward (Alt+→)"
                             Command="{Binding ActivePanel.NavigateForwardCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <Viewbox Width="24" Height="24" Margin="0,0,4,0">
+                            <Viewbox Width="24" Height="24" Margin="0,-3,4,3" VerticalAlignment="Center">
                                 <!-- Blue right arrow -->
-                                <Path Fill="#5B9DC8"
+                                <Path Fill="{StaticResource SplitterBrush}"
                                       Data="M 15,9 L 23,15 L 15,21 L 15,18 L 9,18 L 9,12 L 15,12 Z"/>
                             </Viewbox>
                             <TextBlock Text="Forward" VerticalAlignment="Center"/>
@@ -195,13 +195,13 @@
                                  Background="#D0D0D0" BorderThickness="0">
                         <ProgressBar.Style>
                             <Style TargetType="ProgressBar">
-                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                <Setter Property="Foreground" Value="{StaticResource SplitterBrush}"/>
                                 <Style.Triggers>
                                     <!-- Blue when >75% used (changed from orange) -->
                                     <DataTrigger Binding="{Binding LeftPanel.DriveUsedPercent,
                                         Converter={StaticResource ThresholdToBoolConverter},
                                         ConverterParameter=75}" Value="True">
-                                        <Setter Property="Foreground" Value="#5B9DC8"/>
+                                        <Setter Property="Foreground" Value="{StaticResource SplitterBrush}"/>
                                     </DataTrigger>
                                     <!-- Red when >90% used -->
                                     <DataTrigger Binding="{Binding LeftPanel.DriveUsedPercent,
@@ -235,12 +235,12 @@
                                  Background="#D0D0D0" BorderThickness="0">
                         <ProgressBar.Style>
                             <Style TargetType="ProgressBar">
-                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                <Setter Property="Foreground" Value="{StaticResource SplitterBrush}"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding RightPanel.DriveUsedPercent,
                                         Converter={StaticResource ThresholdToBoolConverter},
                                         ConverterParameter=75}" Value="True">
-                                        <Setter Property="Foreground" Value="#5B9DC8"/>
+                                        <Setter Property="Foreground" Value="{StaticResource SplitterBrush}"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding RightPanel.DriveUsedPercent,
                                         Converter={StaticResource ThresholdToBoolConverter},

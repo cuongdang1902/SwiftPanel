@@ -161,7 +161,7 @@
         <Setter Property="Padding"           Value="3,1"/>
         <Setter Property="Cursor"            Value="Hand"/>
         <Setter Property="FocusVisualStyle"  Value="{x:Null}"/>
-        <Setter Property="FontSize"          Value="10"/>
+        <Setter Property="FontSize"          Value="13"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Setter Property="Template">
             <Setter.Value>

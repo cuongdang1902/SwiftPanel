@@ -106,109 +106,21 @@ namespace SwiftPanel.Controls
         // Drive Bar  (SpeedCommander 13 style)
         // ─────────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Builds a vector HDD icon matching SpeedCommander 13's compact drive-bar style.
-        /// Shape: rounded-rect body + top-cap + small platter circle.
-        /// </summary>
         private static UIElement MakeDriveIcon(DriveType driveType)
         {
-            // Colours
-            var bodyColor = driveType switch
+            var img = new Image
             {
-                DriveType.CDRom   => Color.FromRgb(0x80, 0x80, 0x80),
-                DriveType.Network => Color.FromRgb(0x00, 0x70, 0xC0),
-                DriveType.Ram     => Color.FromRgb(0x20, 0x90, 0x40),
-                _                 => Color.FromRgb(0x1F, 0x5F, 0xB0)   // Fixed / Removable
+                Width = 20, Height = 20,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 4, 0)
             };
-            var bodyBrush  = new SolidColorBrush(bodyColor);
-            var lightBrush = new SolidColorBrush(Color.FromRgb(0xB8, 0xD4, 0xF0));
-            var darkBrush  = new SolidColorBrush(Color.FromRgb(0x0A, 0x30, 0x70));
-
-            var canvas = new Canvas { Width = 14, Height = 11,
-                                      VerticalAlignment = VerticalAlignment.Center };
-
-            if (driveType == DriveType.CDRom)
+            RenderOptions.SetBitmapScalingMode(img, BitmapScalingMode.HighQuality);
+            try
             {
-                // CD: circle with hole
-                var outer = new Ellipse
-                {
-                    Width = 11, Height = 11,
-                    Fill   = Brushes.Silver,
-                    Stroke = new SolidColorBrush(Color.FromRgb(0x60, 0x60, 0x60)),
-                    StrokeThickness = 0.8
-                };
-                Canvas.SetLeft(outer, 1); Canvas.SetTop(outer, 0);
-
-                var highlight = new Ellipse
-                {
-                    Width = 6, Height = 3,
-                    Fill = new SolidColorBrush(Color.FromArgb(120, 255, 255, 255))
-                };
-                Canvas.SetLeft(highlight, 3); Canvas.SetTop(highlight, 1);
-
-                var hole = new Ellipse
-                {
-                    Width = 3, Height = 3,
-                    Fill = new SolidColorBrush(Color.FromRgb(0xE8, 0xEC, 0xEF))
-                };
-                Canvas.SetLeft(hole, 4); Canvas.SetTop(hole, 4);
-
-                canvas.Children.Add(outer);
-                canvas.Children.Add(highlight);
-                canvas.Children.Add(hole);
+                img.Source = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/drive_icon.png"));
             }
-            else
-            {
-                // HDD body – main rectangle
-                var body = new Rectangle
-                {
-                    Width = 14, Height = 9,
-                    Fill   = bodyBrush,
-                    RadiusX = 1.5, RadiusY = 1.5
-                };
-                Canvas.SetLeft(body, 0); Canvas.SetTop(body, 2);
-
-                // Top cap (narrower, slightly lighter)
-                var cap = new Rectangle
-                {
-                    Width = 10, Height = 2,
-                    Fill   = lightBrush,
-                    RadiusX = 1, RadiusY = 1
-                };
-                Canvas.SetLeft(cap, 2); Canvas.SetTop(cap, 0);
-
-                // Platter circle
-                var platter = new Ellipse
-                {
-                    Width = 5, Height = 5,
-                    Fill   = lightBrush,
-                    Stroke = darkBrush, StrokeThickness = 0.6
-                };
-                Canvas.SetLeft(platter, 1); Canvas.SetTop(platter, 3);
-
-                // Access arm line
-                var arm = new Line
-                {
-                    X1 = 7, Y1 = 5.5, X2 = 13, Y2 = 4,
-                    Stroke = darkBrush, StrokeThickness = 0.8
-                };
-
-                // Highlight stripe (top)
-                var shine = new Rectangle
-                {
-                    Width = 14, Height = 2,
-                    Fill  = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)),
-                    RadiusX = 1.5, RadiusY = 0
-                };
-                Canvas.SetLeft(shine, 0); Canvas.SetTop(shine, 2);
-
-                canvas.Children.Add(body);
-                canvas.Children.Add(cap);
-                canvas.Children.Add(platter);
-                canvas.Children.Add(arm);
-                canvas.Children.Add(shine);
-            }
-            return canvas;
+            catch { }
+            return img;
         }
 
         private void PopulateDriveBar()
@@ -257,7 +169,7 @@ namespace SwiftPanel.Controls
                 var letterTb = new TextBlock
                 {
                     Text              = letter,
-                    FontSize          = 10,
+                    FontSize          = 15,
                     FontWeight        = FontWeights.SemiBold,
                     Foreground        = normalFg,
                     VerticalAlignment = VerticalAlignment.Center,
@@ -356,7 +268,7 @@ namespace SwiftPanel.Controls
                     BreadcrumbPanel.Children.Add(new TextBlock
                     {
                         Text              = "›",
-                        FontSize          = 11,
+                        FontSize          = 14,
                         VerticalAlignment = VerticalAlignment.Center,
                         Margin            = new Thickness(0),
                         Foreground        = separatorFg
