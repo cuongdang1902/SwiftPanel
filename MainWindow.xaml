@@ -3,12 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:SwiftPanel.Controls"
         xmlns:vm="clr-namespace:SwiftPanel.ViewModels"
-        Title="SwiftPanel" Height="650" Width="1100"
+        Title="SwiftPanel - Agentic Workspace" Height="650" Width="1100"
         MinHeight="400" MinWidth="700"
         Background="{StaticResource AppBackgroundBrush}"
         FontFamily="Segoe UI" FontSize="11"
         WindowStartupLocation="CenterScreen"
-        KeyDown="OnWindowKeyDown">
+        Icon="Assets/Logo.png"
+        PreviewKeyDown="OnWindowKeyDown">
 
     <Window.Resources>
         <ResourceDictionary>

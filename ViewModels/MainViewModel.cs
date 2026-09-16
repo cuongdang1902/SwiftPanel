@@ -172,12 +172,19 @@ namespace SwiftPanel.ViewModels
             var src = ActivePanel;
             var dst = InactivePanel;
             var items = src.GetActionItems();
-            if (items.Count == 0) return;
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Please select files to copy.", "Copy", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
             // Collect all file paths to copy
             var allFiles = EnumerateFiles(items);
             int total = allFiles.Count;
             if (total == 0) return;
+
+            var r = MessageBox.Show($"Copy {total} file(s) to:\n{dst.CurrentPath}?", "Confirm Copy (F5)", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (r != MessageBoxResult.Yes) return;
 
             var dialog = new ProgressDialog($"Copying {total} file(s) to:\n{dst.CurrentPath}")
             {
@@ -244,10 +251,18 @@ namespace SwiftPanel.ViewModels
             var src = ActivePanel;
             var dst = InactivePanel;
             var items = src.GetActionItems();
-            if (items.Count == 0) return;
+            if (items.Count == 0)
+            {
+                MessageBox.Show("Please select files to move.", "Move", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
             var allFiles = EnumerateFiles(items);
             int total = allFiles.Count;
+            if (total == 0) return;
+
+            var r = MessageBox.Show($"Move {total} file(s) to:\n{dst.CurrentPath}?", "Confirm Move (F6)", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (r != MessageBoxResult.Yes) return;
             if (total == 0) return;
 
             var dialog = new ProgressDialog($"Moving {total} file(s) to:\n{dst.CurrentPath}")

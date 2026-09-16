@@ -114,11 +114,19 @@ namespace SwiftPanel
         /// <summary>Global keyboard shortcuts that apply regardless of which control has focus.</summary>
         private void OnWindowKeyDown(object sender, KeyEventArgs e)
         {
+            try { System.IO.File.AppendAllText("keylog.txt", $"[{System.DateTime.Now:HH:mm:ss}] Key: {e.Key} (SystemKey: {e.SystemKey}), Handled: {e.Handled}, Focused: {Keyboard.FocusedElement?.GetType().Name}\n"); } catch { }
             if (DataContext is not MainViewModel vm) return;
             if (e.Handled) return;
 
             var ctrl  = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
             var alt   = Keyboard.Modifiers.HasFlag(ModifierKeys.Alt);
+
+            // Don't intercept keys if focused element is a TextBox (e.g. Filter/Rename box)
+            if (Keyboard.FocusedElement is System.Windows.Controls.TextBox)
+            {
+                try { System.IO.File.AppendAllText("keylog.txt", $"  -> Ignored because TextBox has focus\n"); } catch { }
+                return;
+            }
             var shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
 
             switch (e.Key)
@@ -186,6 +194,7 @@ namespace SwiftPanel
                     break;
 
                 case Key.F5:
+                    try { System.IO.File.AppendAllText("keylog.txt", $"  -> Invoking CopyCommand\n"); } catch { }
                     vm.CopyCommand.Execute(null);
                     e.Handled = true;
                     break;

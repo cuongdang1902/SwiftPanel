@@ -1,0 +1,5 @@
+[14:50:59] Key: F5 (SystemKey: None), Handled: False
+[14:51:02] Key: F6 (SystemKey: None), Handled: False
+[14:51:07] Key: F5 (SystemKey: None), Handled: False
+[14:51:18] Key: F5 (SystemKey: None), Handled: False
+[14:51:22] Key: F5 (SystemKey: None), Handled: False
