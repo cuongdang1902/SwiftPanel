@@ -34,7 +34,7 @@
 
     <!-- File list -->
     <SolidColorBrush x:Key="FileListBackgroundBrush"     Color="#FFFFFF"/>
-    <SolidColorBrush x:Key="FileListAlternateRowBrush"   Color="#F5F7FA"/>
+    <SolidColorBrush x:Key="FileListAlternateRowBrush"   Color="#FFFFFF"/>
     <SolidColorBrush x:Key="FileListBorderBrush"         Color="#CCCEDB"/>
 
     <!-- Selection: active panel (SC13 blue) -->
@@ -61,8 +61,8 @@
     <!-- Text colors -->
     <SolidColorBrush x:Key="PrimaryTextBrush"   Color="#1E1E1E"/>
     <SolidColorBrush x:Key="SecondaryTextBrush" Color="#444444"/>
-    <!-- SC13: folders = dark navy blue -->
-    <SolidColorBrush x:Key="FolderTextBrush"    Color="#1F3F7A"/>
+    <!-- SC13: folders = black -->
+    <SolidColorBrush x:Key="FolderTextBrush"    Color="#1E1E1E"/>
 
     <!-- Toolbar -->
     <SolidColorBrush x:Key="ToolbarButtonHoverBrush"   Color="#C7E3F7"/>
@@ -78,8 +78,8 @@
     <SolidColorBrush x:Key="StatusBarTextBrush" Color="#1E1E1E"/>
 
     <!-- Font sizes -->
-    <system:Double xmlns:system="clr-namespace:System;assembly=mscorlib" x:Key="SmallFontSize">9</system:Double>
-    <system:Double xmlns:system="clr-namespace:System;assembly=mscorlib" x:Key="NormalFontSize">11</system:Double>
+    <system:Double xmlns:system="clr-namespace:System;assembly=mscorlib" x:Key="SmallFontSize">11</system:Double>
+    <system:Double xmlns:system="clr-namespace:System;assembly=mscorlib" x:Key="NormalFontSize">13</system:Double>
 
     <!-- ===== Toolbar Button Style ===== -->
     <Style x:Key="ToolbarButtonStyle" TargetType="Button">

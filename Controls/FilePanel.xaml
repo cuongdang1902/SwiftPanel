@@ -43,7 +43,7 @@
                         <ColumnDefinition Width="40"/>
                     </Grid.ColumnDefinitions>
 
-                    <Image Grid.Column="0" Source="{Binding Icon}" Width="16" Height="16"
+                    <Image Grid.Column="0" Source="{Binding Icon}" Width="18" Height="18"
                            RenderOptions.BitmapScalingMode="HighQuality"
                            VerticalAlignment="Center"/>
 
@@ -57,7 +57,7 @@
                     <!-- Inline rename TextBox -->
                     <TextBox Grid.Column="1"
                              Text="{Binding EditingName, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="2,0" Padding="1,0" FontSize="10"
+                             Margin="2,0" Padding="1,0" FontSize="13"
                              BorderThickness="1" BorderBrush="#316AC5" Background="White"
                              Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibilityConverter}}"
                              GotFocus="OnRenameBoxGotFocus"
@@ -77,7 +77,7 @@
             <Border Background="{Binding IsMarked, Converter={StaticResource MarkedToBrushConverter}}"
                     Width="220" Margin="0,1">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Image Source="{Binding Icon}" Width="16" Height="16"
+                    <Image Source="{Binding Icon}" Width="18" Height="18"
                            RenderOptions.BitmapScalingMode="HighQuality"
                            VerticalAlignment="Center" Margin="2,0"/>
                     <TextBlock Text="{Binding DisplayName}" Margin="3,0"
@@ -248,7 +248,7 @@
                 <Border Grid.Column="1" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,1,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Name" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold"
+                        <TextBlock FontSize="13"
                                    Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Name"/><Run Text="{Binding NameSortArrow, Mode=OneWay}"/>
                         </TextBlock>
@@ -258,7 +258,7 @@
                 <Border Grid.Column="2" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,1,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Extension" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold"
+                        <TextBlock FontSize="13"
                                    Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Ext"/><Run Text="{Binding ExtSortArrow, Mode=OneWay}"/>
                         </TextBlock>
@@ -268,7 +268,7 @@
                 <Border Grid.Column="3" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,1,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Size" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold" TextAlignment="Right"
+                        <TextBlock FontSize="13" TextAlignment="Right"
                                    Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Size"/><Run Text="{Binding SizeSortArrow, Mode=OneWay}"/>
                         </TextBlock>
@@ -278,7 +278,7 @@
                 <Border Grid.Column="4" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,1,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Date" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold"
+                        <TextBlock FontSize="13"
                                    Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Date"/><Run Text="{Binding DateSortArrow, Mode=OneWay}"/>
                         </TextBlock>
@@ -288,7 +288,7 @@
                 <Border Grid.Column="5" BorderBrush="{StaticResource ColumnHeaderBorderBrush}" BorderThickness="0,0,0,1">
                     <Button Style="{StaticResource ColumnHeaderButtonStyle}"
                             Tag="Attributes" Click="OnColumnHeaderClick">
-                        <TextBlock FontSize="10" FontWeight="Bold"
+                        <TextBlock FontSize="13"
                                    Foreground="{StaticResource ColumnHeaderForegroundBrush}">
                             <Run Text="Attr"/><Run Text="{Binding AttributesSortArrow, Mode=OneWay}"/>
                         </TextBlock>
@@ -348,7 +348,7 @@
                         <Setter Property="Padding"                    Value="0,1"/>
                         <Setter Property="Margin"                     Value="0"/>
                         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                        <Setter Property="FontSize"                   Value="10"/>
+                        <Setter Property="FontSize"                   Value="13"/>
                         <Setter Property="VerticalContentAlignment"   Value="Center"/>
                         <Setter Property="FocusVisualStyle"           Value="{x:Null}"/>
                         <Style.Triggers>
